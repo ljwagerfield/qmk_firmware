@@ -1,36 +1,59 @@
-# Quantum Mechanical Keyboard Firmware
+# Ferris Sweep QMK Firmware Instructions
 
-[![Current Version](https://img.shields.io/github/tag/qmk/qmk_firmware.svg)](https://github.com/qmk/qmk_firmware/tags)
-[![Discord](https://img.shields.io/discord/440868230475677696.svg)](https://discord.gg/qmk)
-[![Docs Status](https://img.shields.io/badge/docs-ready-orange.svg)](https://docs.qmk.fm)
-[![GitHub contributors](https://img.shields.io/github/contributors/qmk/qmk_firmware.svg)](https://github.com/qmk/qmk_firmware/pulse/monthly)
-[![GitHub forks](https://img.shields.io/github/forks/qmk/qmk_firmware.svg?style=social&label=Fork)](https://github.com/qmk/qmk_firmware/)
+## Setup
 
-This is a keyboard firmware based on the [tmk\_keyboard firmware](https://github.com/tmk/tmk_keyboard) with some useful features for Atmel AVR and ARM controllers, and more specifically, the [OLKB product line](https://olkb.com), the [ErgoDox EZ](https://ergodox-ez.com) keyboard, and the Clueboard product line.
+```
+git clone git@github.com:ljwagerfield/qmk_firmware.git
+cd qmk_firmware
+gco lawrence
+brew install avr-gcc
+brew install arm-none-eabi-gcc@9
+BREW_PREFIX="$(brew --prefix)"
+echo '' >> ~/.zshrc
+echo "export PATH=\"${BREW_PREFIX}/opt/arm-none-eabi-gcc@9/bin:${BREW_PREFIX}/opt/arm-none-eabi-binutils/bin:\$PATH\"" >> ~/.zshrc
+source ~/.zshrc
+brew install qmk/qmk/qmk
+brew install qmk-toolbox
+qmk setup -H $(pwd)
+qmk config user.keyboard=ferris/sweep
+qmk config user.keymap=ljwagerfield
+```
 
-## Documentation
+## Flashing
 
-* [See the official documentation on docs.qmk.fm](https://docs.qmk.fm)
+The firmware lives on each MCU.
 
-The docs are powered by [VitePress](https://vitepress.dev/). They are also viewable offline; see [Previewing the Documentation](https://docs.qmk.fm/#/contributing?id=previewing-the-documentation) for more details.
+The MCU that is plugged into the USB is where the vast majority of the code runs. The slave MCU runs a very small part of the QMK firmware.
 
-You can request changes by making a fork and opening a [pull request](https://github.com/qmk/qmk_firmware/pulls).
+As such, you only need to flash both sides when very low level changes to the QMK firmware are made, such as when you are upgrading QMK versions.
 
-## Supported Keyboards
+Thus, you only need to flash one side (the side that's plugged into USB) for the vast majority of changes you'll make to the firmware. For example, if you make changes to the keymap, or anything like that, you only need to flash the side that's connected to the USB. You don't need to unplug the TRRS. You don't need to touch any cables whatsoever.
 
-* [Planck](/keyboards/planck/)
-* [Preonic](/keyboards/preonic/)
-* [ErgoDox EZ](/keyboards/ergodox_ez/)
-* [Clueboard](/keyboards/clueboard/)
-* [Cluepad](/keyboards/clueboard/17/)
-* [Atreus](/keyboards/atreus/)
+### Initial Flashing (or QMK version updates)
 
-The project also includes community support for [lots of other keyboards](/keyboards/).
+1. Keep TRRS cable connected at all times.
+2. Plug USB into right side.
+3. Press the reset button.
+4. Flash: `qmk flash`
+5. Unplug USB.
+6. Plug USB into left side.
+7. Press the reset button.
+8. Flash: `qmk flash`qwertyui
+9. Done.
 
-## Maintainers
+### Subsequent Flashing
 
-QMK is developed and maintained by Jack Humbert of OLKB with contributions from the community, and of course, [Hasu](https://github.com/tmk). The OLKB product firmwares are maintained by [Jack Humbert](https://github.com/jackhumbert), the Ergodox EZ by [ZSA Technology Labs](https://github.com/zsa), the Clueboard by [Zach White](https://github.com/skullydazed), and the Atreus by [Phil Hagelberg](https://github.com/technomancy).
+1. Keep all cables connected.
+2. Press the bootloader button on the keyboard (the one you have mapped to a specific key).
+3. Flash: `qmk flash`
+4. Done.
 
-## Official Website
+-----------------------------------------------
 
-[qmk.fm](https://qmk.fm) is the official website of QMK, where you can find links to this page, the documentation, and the keyboards supported by QMK.
+## IMPORTANT
+
+NEVER touch (plug or unplug) TRRS cable while USB cable is connected.
+
+Doing so runs a 50% chance of frying the MCUs.
+
+-----------------------------------------------
