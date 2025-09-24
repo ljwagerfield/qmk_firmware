@@ -56,12 +56,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO   , QK_BOOT
     ),
     [_HYP1] = LAYOUT_split_3x5_2(
-        HYPR(KC_F) , HYPR(KC_P) ,  HYPR(KC_D) , HYPR(KC_L) , HYPR(KC_J) ,
-        KC_NO , HYPR(KC_U) , HYPR(KC_O) , HYPR(KC_Y) , HYPR(KC_Q) ,
+        HYPR(KC_F) , HYPR(KC_P) ,  HYPR(KC_D) , HYPR(KC_L) , HYPR(KC_B) ,
+        HYPR(KC_Q) , HYPR(KC_U) , HYPR(KC_O) , HYPR(KC_Y) , HYPR(KC_V) ,
         HYPR(KC_S) , HYPR(KC_N) , HYPR(KC_T) , HYPR(KC_H) , HYPR(KC_K) ,
-        KC_NO , HYPR(KC_A) , HYPR(KC_E) , HYPR(KC_I) , HYPR(KC_C) ,
-        KC_NO , HYPR(KC_W) , HYPR(KC_G) , HYPR(KC_M) , KC_NO ,
-        KC_NO , HYPR(KC_TAB) , HYPR(KC_BSPC) , HYPR(KC_B) , HYPR(KC_ENT) ,
+        HYPR(KC_TAB) , HYPR(KC_A) , HYPR(KC_E) , HYPR(KC_I) , HYPR(KC_C) ,
+        HYPR(KC_BSPC) , HYPR(KC_W) , HYPR(KC_G) , HYPR(KC_M) , HYPR(KC_J) ,
+        HYPR(KC_Z) , HYPR(KC_DOT) , HYPR(KC_COMMA) , HYPR(KC_QUOT) , HYPR(KC_ENT) ,
         HYPR(KC_X) , HYPR(KC_R) ,
         KC_NO , KC_NO
     )
