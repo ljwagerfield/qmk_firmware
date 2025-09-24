@@ -6,11 +6,11 @@ enum layers { _ALPHA, _NUM, _ARR, _SYM, _FN, _HYP1 };
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Alpha (Hands Down Prometheus)
     [_ALPHA] = LAYOUT_split_3x5_2(
-        KC_F      , KC_P      , KC_D      , KC_L      , KC_J      ,
+        KC_F      , KC_P      , KC_D      , KC_L      , KC_B      ,
         KC_Q     , KC_U      , KC_O      , KC_Y      , KC_V      ,
         LOPT_T(KC_S) , LCTL_T(KC_N) , LT(_ARR, KC_T) , LCMD_T(KC_H) , KC_K      ,
         KC_TAB    , LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C) ,
-        KC_BSPC      , KC_W      , KC_G      , KC_M      , KC_B     ,
+        KC_BSPC      , KC_W      , KC_G      , KC_M      , KC_J     ,
         KC_Z  , KC_DOT    , KC_COMMA   , KC_DQUO      , KC_ENT    ,
         LT(_FN, KC_X)    , LSFT_T(KC_R)   , 
         LT(_SYM, KC_SPC)  , LT(_HYP1, KC_ESC)
