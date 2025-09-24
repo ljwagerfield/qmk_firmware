@@ -1,53 +1,102 @@
 // clang-format off
 #include QMK_KEYBOARD_H
 
+enum layers { _ALPHA, _NUM, _ARR, _SYM, _FN, _HYP1 };
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    // Letters (Graphite Layout)
-    // https://github.com/rdavison/graphite-layout#readme
-    [0] = LAYOUT_split_3x5_2(
-        KC_B      , KC_L      , KC_D      , KC_W      , KC_Z      ,
-        KC_QUOTE  , KC_F      , KC_O      , KC_U      , KC_J      ,
-        LCTL_KC_N , LOPT_KC_R , LCMD_KC_T , LSFT_KC_S , HYPR_KC_G ,
-        HYPR_KC_Y , RSFT_KC_H , RCMD_KC_A , ROPT_KC_E , RCTL_KC_I ,
-        KC_Q      , KC_X      , KC_M      , KC_C      , KC_V      ,
-        KC_K      , KC_P      , KC_COMMA  , KC_MINUS  , KC_DOT    ,
-        LSFT_OSM  , LAY1_BSPC ,
-        LAY2_SPC  , LAY3_ENT
+    // Alpha (Hands Down Prometheus)
+    [_ALPHA] = LAYOUT_split_3x5_2(
+        KC_F      , KC_P      , KC_D      , KC_L      , KC_J      ,
+        KC_Q     , KC_U      , KC_O      , KC_Y      , KC_V      ,
+        LOPT_T(KC_S) , LCTL_T(KC_N) , LT(_ARR, KC_T) , LCMD_T(KC_H) , KC_K      ,
+        KC_TAB    , LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C) ,
+        KC_BSPC      , KC_W      , KC_G      , KC_M      , KC_B     ,
+        KC_Z  , KC_DOT    , KC_COMMA   , KC_DQUO      , KC_ENT    ,
+        LT(_FN, KC_X)    , LSFT_T(KC_R)   , 
+        LT(_SYM, KC_SPC)  , LT(_HYP1, KC_ESC)
     ),
-    // Symbols
-    [1] = LAYOUT_split_3x5_2(
-        KC_ESC    , KC_AT     , KC_HASH   , KC_ASTR   , KC_GRAVE  ,
-        KC_TILDE  , KC_CIRC   , KC_DOLLAR , KC_COMMA  , KC_SCLN   ,
-        LCTL_TAB  , LOPT_EXLM , LCMD_EQL  , LSFT_LABK , HYPR_SLSH ,
-        HYPR_PIPE , RSFT_LPRN , RCMD_LCBR , ROPT_LBRC , RCTL_COLN ,
-        KC_MINUS  , KC_PLUS   , KC_QUES   , KC_RABK   , KC_BSLS   ,
-        KC_AMPR   , KC_RPRN   , KC_RCBR   , KC_RBRC   , KC_PERC   ,
-        KC_POUND  , KC_NO     ,
-        RCMD_SPC  , RSFT_ENT
+    [_NUM] = LAYOUT_split_3x5_2(
+        KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
+        KC_NO   , KC_PERC   , KC_CIRC  , KC_DOLLAR   , KC_POUND     ,
+        LOPT_T(KC_MINUS)  , LCTL_T(KC_4)   , LT(_ARR, KC_5)  , LCMD_T(KC_6)    , KC_NO   ,
+        KC_NO     , QK_LAYER_LOCK      , KC_SLSH      , LCTL_T(KC_KP_ASTERISK)      , LOPT_T(KC_PLUS)      ,
+        KC_TRNS     , KC_7      , KC_8      , KC_9      , KC_NO   ,
+        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_TRNS   ,
+        KC_TRNS     , LSFT_T(KC_0)     ,
+        KC_SPC  , KC_TRNS // 'KC_SPC' without 'LT(_SYM,_)' because encouraging access to other symbol layers from non-base layers gives the illusion you can access any symbol from any layer, which you can't (as supporting this is problematic and leads to a confusing design). We make exception to allowing access to arrows from the num layer, as these aren't typable symbols.
     ),
-    // Numbers & Navigation
-    [2] = LAYOUT_split_3x5_2(
-        KC_ASTR   , KC_1      , KC_2      , KC_3      , KC_PLUS   ,
-        MS_LEFT   , MS_DOWN   , MS_UP     , MS_RGHT   , KC_BSPC   ,
-        LCTL_KC_0 , LOPT_KC_4 , LCMD_KC_5 , LSFT_KC_6 , HYPR_DOT  ,
-        KC_LEFT   , KC_DOWN   , KC_UP     , KC_RIGHT  , KC_COLON  ,
-        KC_SLASH  , KC_7      , KC_8      , KC_9      , KC_MINUS  ,
-        MS_WHLR   , MS_WHLU   , MS_WHLD   , MS_WHLL   , KC_SPACE  ,
-        LSFT_EQL  , LCTL_MBTN ,
-        KC_NO     , DB_TOGG
+    [_ARR] = LAYOUT_split_3x5_2(
+        KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
+        KC_NO   , LCTL(KC_LEFT)      , KC_UP      , LCTL(KC_RIGHT)      , KC_NO   ,
+        LCMD(KC_X), LCMD(KC_C), KC_NO, QK_LAYER_LOCK, KC_NO,
+        LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
+        KC_TRNS   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
+        KC_NO  , KC_LEFT      , LCMD(KC_Z)      , KC_RIGHT      , KC_TRNS  ,
+        KC_TRNS  , KC_LSFT , // TODO: KC_LSFT must also be shift on hold
+        KC_SPC     , KC_TRNS
     ),
-    // Media & Function Keys
-    [3] = LAYOUT_split_3x5_2(
-        KC_MCTL   , KC_MUTE   , KC_VOLD   , KC_VOLU   , MDIA_PREV ,
-        CAPT_AREA , KC_F1     , KC_F2     , KC_F3     , KC_F4     ,
-        BWSR_BACK , BWSR_FWRD , PREV_TAB  , NEXT_TAB  , MDIA_PLAY ,
-        CAPT_WNDW , RSFT_F5   , RCMD_F6   , ROPT_F7   , RCTL_F8   ,
-        LOCK_SCRN , KC_SLEP   , KC_BRID   , KC_BRIU   , MDIA_NEXT ,
-        CAPT_SCRN , KC_F9     , KC_F10    , KC_F11    , KC_F12    ,
-        KC_LSFT   , KC_DICT   ,
-        QK_BOOT   , KC_NO
+    [_SYM] = LAYOUT_split_3x5_2(
+        KC_AT   , KC_AMPR      , KC_SLSH      , KC_QUOT      , KC_NO   ,
+        KC_NO      , KC_KP_ASTERISK, KC_GRAVE      , KC_PLUS      , KC_PIPE   ,
+        LOPT_T(KC_MINUS)   , LCTL_T(KC_LABK)   , KC_EQL     , LCMD_T(KC_RABK)   , KC_TILDE   ,
+        KC_HSH , LCMD_T(KC_RCBR) , KC_LCBR , LOPT_T(KC_DOLLAR) , LCTL_T(KC_EXLM)  ,
+        KC_QUES   , KC_UNDS   , KC_LBRC     , KC_RBRC  , KC_POUND  ,
+        KC_CIRC  , KC_SEMICOLON      , KC_NO      , KC_NO      , KC_PERC  ,
+        KC_BSLS  , LSFT(KC_R) ,
+        KC_NO    , KC_NO
+    ),
+    [_FN] = LAYOUT_split_3x5_2(
+        KC_NO , KC_NO     , LCTL(LCMD(KC_Q))     , KC_NO     , KC_NO     ,
+        KC_NO , KC_F1   , KC_F2   , KC_F3   , KC_F4   , 
+        KC_NO , KC_MPRV   , KC_MPLY   , KC_MNXT   , KC_NO   ,
+        KC_NO , KC_F5 , KC_F6 , KC_F7  , KC_F8  ,
+        KC_NO , KC_NO     , KC_VOLD    , KC_VOLU    , KC_NO    ,
+        KC_NO , KC_F9 , KC_F10   , KC_F11   , KC_F12   , 
+        KC_NO   , KC_NO   ,
+        KC_NO   , QK_BOOT
+    ),
+    [_HYP1] = LAYOUT_split_3x5_2(
+        HYPR(KC_F) , HYPR(KC_P) ,  HYPR(KC_D) , HYPR(KC_L) , HYPR(KC_J) ,
+        KC_NO , HYPR(KC_U) , HYPR(KC_O) , HYPR(KC_Y) , HYPR(KC_Q) ,
+        HYPR(KC_S) , HYPR(KC_N) , HYPR(KC_T) , HYPR(KC_H) , HYPR(KC_K) ,
+        KC_NO , HYPR(KC_A) , HYPR(KC_E) , HYPR(KC_I) , HYPR(KC_C) ,
+        KC_NO , HYPR(KC_W) , HYPR(KC_G) , HYPR(KC_M) , KC_NO ,
+        KC_NO , HYPR(KC_TAB) , HYPR(KC_BSPC) , HYPR(KC_B) , HYPR(KC_ENT) ,
+        HYPR(KC_X) , HYPR(KC_R) ,
+        KC_NO , KC_NO
     )
 };
+
+// Shift+Space -> Caps Lock
+const key_override_t sh_spc_to_caps =
+    ko_make_with_layers_and_negmods(
+        MOD_MASK_SHIFT,     // when Shift is held…
+        KC_SPC,             // …and Space is pressed…
+        KC_CAPS,            // …send Caps Lock
+        ~0,                 // active on all layers
+        MOD_MASK_CTRL | MOD_MASK_ALT | MOD_MASK_GUI   // but NOT if other mods are down
+    );
+
+// Shift + .  ->  :
+const key_override_t sh_dot__to__colon =
+  ko_make_basic(MOD_MASK_SHIFT, KC_DOT, KC_COLN);
+
+// Shift + ,  ->  )
+const key_override_t sh_comm__to__rparen =
+  ko_make_basic(MOD_MASK_SHIFT, KC_COMM, KC_RPRN);
+
+// Shift + "  ->  (
+const key_override_t sh_dquo__to__lparen =
+  ko_make_basic(MOD_MASK_SHIFT, KC_DQUO, KC_LPRN);
+
+const key_override_t *key_overrides[] = {
+  &sh_spc_to_caps,
+  &sh_dot__to__colon,
+  &sh_comm__to__rparen,
+  &sh_dquo__to__lparen,
+  NULL
+};
+
 
 static bool tap(uint16_t keycode) {
     tap_code16(keycode);
@@ -56,22 +105,14 @@ static bool tap(uint16_t keycode) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed) return true;
-
-    switch (keycode) {
-        case CAPT_WNDW:
-            SEND_STRING(SS_LCMD(SS_LSFT("4")) SS_DELAY(100) SS_TAP(X_SPACE));
-            return false;
-    }
-
     if (!record->tap.count) return true;
 
     switch (keycode) {
-        case LOPT_EXLM: return tap(KC_EXLM);
-        case LSFT_LABK: return tap(KC_LABK);
-        case HYPR_PIPE: return tap(KC_PIPE);
-        case RSFT_LPRN: return tap(KC_LPRN);
-        case RCMD_LCBR: return tap(KC_LCBR);
-        case RCTL_COLN: return tap(KC_COLN);
+        case LCMD_T(KC_RCBR): return tap(KC_RCBR);
+        case LCTL_T(KC_LABK): return tap(KC_LABK);
+        case LCMD_T(KC_RABK): return tap(KC_RABK);
+        case LOPT_T(KC_DOLLAR): return tap(KC_DOLLAR);
+        case LCTL_T(KC_EXLM): return tap(KC_EXLM);
     }
 
     return true;
@@ -83,11 +124,6 @@ bool is_flow_tap_key(uint16_t keycode) {
 
     switch (get_tap_keycode(keycode)) {
         case KC_A ... KC_Z:
-        case KC_SPACE:
-        case KC_QUOTE:
-        case KC_COMMA:
-        case KC_MINUS:
-        case KC_DOT:
             return true;
     }
 
@@ -96,11 +132,11 @@ bool is_flow_tap_key(uint16_t keycode) {
 
 uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case LSFT_OSM:
-            return TAPPING_TERM + 50; // 250ms
-        case LAY1_BSPC:
-            return TAPPING_TERM - 50; // 150ms
+        // case LSFT_OSM:
+        //     return TAPPING_TERM + 50;
+        // case LAY1_BSPC:
+        //     return TAPPING_TERM - 50;
         default:
-            return TAPPING_TERM; // 200ms
+            return TAPPING_TERM; 
     }
 }
