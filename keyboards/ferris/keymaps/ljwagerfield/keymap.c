@@ -17,13 +17,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [_NUM] = LAYOUT_split_3x5_2(
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
-        KC_NO   , KC_PERC   , KC_CIRC  , KC_DOLLAR   , KC_POUND     ,
-        LOPT_T(KC_MINUS)  , LCTL_T(KC_4)   , LT(_ARR, KC_5)  , LCMD_T(KC_6)    , KC_NO   ,
+        KC_NO   , KC_CIRC   , KC_MINUS  , KC_DOLLAR   , KC_POUND     ,
+        LCTL(LSFT(KC_BSPC))  , KC_4   , LT(_ARR, KC_5)  , KC_6    , KC_NO   ,
         KC_NO     , QK_LAYER_LOCK      , KC_SLSH      , LCTL_T(KC_KP_ASTERISK)      , LOPT_T(KC_PLUS)      ,
         KC_TRNS     , KC_7      , KC_8      , KC_9      , KC_NO   ,
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_TRNS   ,
-        KC_TRNS     , LSFT_T(KC_0)     ,
-        KC_SPC  , KC_TRNS // 'KC_SPC' without 'LT(_SYM,_)' because encouraging access to other symbol layers from non-base layers gives the illusion you can access any symbol from any layer, which you can't (as supporting this is problematic and leads to a confusing design). We make exception to allowing access to arrows from the num layer, as these aren't typable symbols.
+        LT(_FN, KC_PERC)     , LSFT_T(KC_0)     ,
+        KC_TRNS  , KC_TRNS
     ),
     [_ARR] = LAYOUT_split_3x5_2(
         KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
@@ -50,7 +50,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO , KC_F1   , KC_F2   , KC_F3   , KC_F4   , 
         KC_NO , KC_MPRV   , KC_MPLY   , KC_MNXT   , KC_NO   ,
         KC_NO , KC_F5 , KC_F6 , KC_F7  , KC_F8  ,
-        KC_NO , KC_NO     , KC_VOLD    , KC_VOLU    , KC_NO    ,
+        KC_NO , KC_VOLD     , KC_MUTE    , KC_VOLU    , KC_NO    ,
         KC_NO , KC_F9 , KC_F10   , KC_F11   , KC_F12   , 
         KC_NO   , KC_NO   ,
         KC_NO   , QK_BOOT
@@ -108,6 +108,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!record->tap.count) return true;
 
     switch (keycode) {
+        case LT(_FN, KC_PERC): return tap(KC_PERC);
         case LCMD_T(KC_RCBR): return tap(KC_RCBR);
         case LCTL_T(KC_LABK): return tap(KC_LABK);
         case LCMD_T(KC_RABK): return tap(KC_RABK);
@@ -118,16 +119,72 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-// https://docs.qmk.fm/tap_hold#flow-tap
-bool is_flow_tap_key(uint16_t keycode) {
-    if (get_mods() & MOD_MASK_CAG) return false;
-
+bool is_prev_flow_tap_key(uint16_t keycode) {
     switch (get_tap_keycode(keycode)) {
+        // TODO: Add all symbols here.
+        case KC_SPC:
         case KC_A ... KC_Z:
             return true;
     }
 
     return false;
+}
+
+
+uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
+                           uint16_t prev_keycode) {
+    // Tap/holds where the tap never needs to be part of a flow tap session.
+    switch (get_tap_keycode(keycode)) {
+        case KC_ESC:
+            return 0;
+    }
+
+    // For faster shifted characters, we use CAG instead of CSAG. 
+    // The trade-off is that for any shortcut combination that involves a shift, 
+    // you must press shift as the last key in that shortcut combination.
+    if (get_mods() & MOD_MASK_CAG) {
+        return 0;
+    }
+
+    // Prevents non-prose keys like Enter or Escape from starting a FlowTap session for the next key press.
+    // Else, if you hit enter multiple times and then quickly go to press the up arrow, then you'll actually 
+    // get the tap action on the key that takes you into the arrows layer. Whereas instead, if we remove 
+    // enter from the flow tap, then you'll instantly access the arrows layer after hitting a load of enter keys.
+    if (!is_prev_flow_tap_key(prev_keycode)) {
+        return 0;
+    }
+
+
+    // Tap/holds where the tap needs to be part of a flow tap session, but we also want quick access to the layers exposed by the holds.
+    switch (get_tap_keycode(keycode)) {
+        case KC_SPC:
+            return 0;
+        case KC_T:
+        case KC_E:
+            // Increase this number if we accidentally trigger holds when typing fast.
+            return 100; 
+        case KC_R:
+            // Shifting tends to happen quite fast, for example spacebar capital I.
+            return 0; 
+    }
+
+    return FLOW_TAP_TERM;
+}
+
+uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
+    switch (get_tap_keycode(keycode)) {
+        // Allows you to access the hold states of these keys, even if the previous key press was the same key. 
+        // Without the below config, if you typed R and then try to shift another letter by then holding R, it 
+        // would instead just type R again, because it would be registered as a tap then hold on the R key, 
+        // which the "quick tap" behaviour will just start repeating R instead of taking you into the hold state for R.
+        case KC_SPC:
+        case KC_T:
+        case KC_E:
+        case KC_R:
+            return 0;
+        default:
+            return QUICK_TAP_TERM;
+    }
 }
 
 uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {

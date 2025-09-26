@@ -5,10 +5,14 @@
 
 // Tap Hold
 // https://docs.qmk.fm/tap_hold
-#define FLOW_TAP_TERM 150 // Max: 500 https://github.com/qmk/qmk_firmware/blob/8f728aa7311f3d66d8c7b68bf85e5da605909b4c/quantum/action_tapping.c#L871
+#define FLOW_TAP_TERM 500 // Max: 500 https://github.com/qmk/qmk_firmware/blob/8f728aa7311f3d66d8c7b68bf85e5da605909b4c/quantum/action_tapping.c#L871
 #define TAPPING_TERM 200
 #define TAPPING_TERM_PER_KEY
 #define PERMISSIVE_HOLD
+
+// Quick Tap
+// https://docs.qmk.fm/tap_hold#quick-tap-term
+#define QUICK_TAP_TERM_PER_KEY
 
 // Caps Word
 // https://docs.qmk.fm/features/caps_word
