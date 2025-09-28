@@ -3,6 +3,10 @@
 
 enum layers { _ALPHA, _NUM, _ARR, _SYM, _FN, _HYP1 };
 
+enum custom_keycodes {
+    LOCK_NUM = SAFE_RANGE
+};
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Alpha (Hands Down Prometheus)
     [_ALPHA] = LAYOUT_split_3x5_2(
@@ -17,9 +21,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [_NUM] = LAYOUT_split_3x5_2(
         LSFT(KC_3)     , KC_1      , KC_2      , KC_3      , KC_NO     ,
-        KC_NO   , KC_CIRC   , KC_SLSH  , KC_MINUS   , KC_PERC     ,
-        QK_LAYER_LOCK  , KC_4   , LT(_ARR, KC_5)  , KC_6    , KC_NO   ,
-        KC_NO     , RCMD_T(KC_DOT)      , KC_KP_ASTERISK      , LCTL_T(KC_PLUS)      , LOPT_T(LCTL(LSFT(KC_BSPC)))      ,
+        KC_NO   ,    KC_CIRC, KC_SLSH  ,    KC_PERC     ,KC_NO,
+        KC_DOT  , KC_4   , LT(_ARR, KC_5)  , KC_6    , KC_NO   ,
+        KC_NO     , RCMD_T(LOCK_NUM)      ,KC_KP_ASTERISK       , LCTL_T(KC_PLUS)      , LOPT_T(KC_MINUS)      ,
         KC_DOLLAR     , KC_7      , KC_8      , KC_9      , KC_NO   ,
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
         KC_TRNS     , KC_0     ,
@@ -93,6 +97,20 @@ static inline bool unlock_all_layer_locks(void) {
     return had_lock;
 }
 
+static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycode) {
+    // If you prefer only one lock at a time, clear others first:
+    unlock_all_layer_locks();
+
+    // Move to target layer immediately
+    layer_move(target_layer);
+
+    // Lock that layer so Esc (below) can unlock it
+    layer_lock_on(target_layer);
+
+    // Send the host key
+    tap_code16(send_keycode);
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!record->event.pressed) return true;
     if (!record->tap.count) return true;
@@ -115,6 +133,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (get_tap_keycode(keycode) == KC_ESC) {
         if (unlock_all_layer_locks()) {
             // Swallow ESC if a layer was unlocked.
+            return false;
+        }
+    }
+
+    if (keycode == RCMD_T(LOCK_NUM)) {
+        if (is_layer_locked(_NUM)) {
+            layer_lock_off(_NUM);
+        }
+        else {
+            layer_lock_on(_NUM);
+        }
+        return false;
+    }
+
+    if (keycode == LSFT_T(KC_SPC)) {
+        if (!is_layer_locked(_NUM)) {
+            goto_lock_and_send(_ARR, LCTL(LSFT(KC_BSPC)));
             return false;
         }
     }
