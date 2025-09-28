@@ -10,29 +10,29 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_QUOT     , KC_U      , KC_O      , KC_Y      , KC_Q      ,
         LOPT_T(KC_S) , LCTL_T(KC_N) , LT(_ARR, KC_T) , LCMD_T(KC_H) , KC_K      ,
         KC_Z    , LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C) ,
-        KC_F      , KC_W      , KC_G      , KC_M      , KC_PERC     ,
-        KC_CIRC  , KC_ENT    , KC_BSPC   , KC_TAB      , KC_V    ,
+        KC_F      , KC_W      , KC_G      , KC_M      , LOPT(KC_3)     ,
+        KC_AT  , KC_ENT    , KC_BSPC   , KC_TAB      , KC_V    ,
         LT(_FN, KC_X)    , LSFT_T(KC_R)   , 
         LT(_SYM, KC_SPC)  , LT(_HYP1, KC_ESC)
     ),
     [_NUM] = LAYOUT_split_3x5_2(
-        KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
-        KC_NO   , KC_CIRC   , KC_MINUS  , KC_DOLLAR   , KC_POUND     ,
-        LCTL(LSFT(KC_BSPC))  , KC_4   , LT(_ARR, KC_5)  , KC_6    , KC_NO   ,
-        KC_NO     , QK_LAYER_LOCK      , KC_SLSH      , LCTL_T(KC_KP_ASTERISK)      , LOPT_T(KC_PLUS)      ,
-        KC_TRNS     , KC_7      , KC_8      , KC_9      , KC_NO   ,
-        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_TRNS   ,
-        LT(_FN, KC_PERC)     , LSFT_T(KC_0)     ,
-        KC_TRNS  , KC_TRNS
+        LSFT(KC_3)     , KC_1      , KC_2      , KC_3      , KC_NO     ,
+        KC_NO   , KC_CIRC   , KC_SLSH  , KC_MINUS   , KC_PERC     ,
+        QK_LAYER_LOCK  , KC_4   , LT(_ARR, KC_5)  , KC_6    , KC_NO   ,
+        KC_NO     , RCMD_T(KC_DOT)      , KC_KP_ASTERISK      , LCTL_T(KC_PLUS)      , LOPT_T(LCTL(LSFT(KC_BSPC)))      ,
+        KC_DOLLAR     , KC_7      , KC_8      , KC_9      , KC_NO   ,
+        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
+        KC_TRNS     , KC_0     ,
+        LSFT_T(KC_SPC)  , KC_TRNS
     ),
     [_ARR] = LAYOUT_split_3x5_2(
         KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
-        KC_NO   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_NO   ,
+        KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
         LCMD(KC_X), LCMD(KC_C), KC_NO, QK_LAYER_LOCK, KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
         KC_NO   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
         KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
-        KC_TRNS  , KC_LSFT , // TODO: KC_LSFT must also be shift on hold
+        KC_TRNS  , KC_LSFT ,
         KC_SPC     , KC_TRNS
     ),
     [_SYM] = LAYOUT_split_3x5_2(
@@ -41,7 +41,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         LOPT_T(KC_LPRN)   , LCTL_T(KC_RPRN)   , KC_DQUO     , LCMD_T(KC_COMMA)   , KC_LBRC   ,
         KC_TILDE , LCMD_T(KC_RABK) , KC_EQL , LOPT_T(KC_LABK) , LCTL_T(KC_MINUS)  ,
         KC_QUES   , KC_KP_ASTERISK   , KC_SLSH     , KC_DOT  , KC_RBRC  ,
-        KC_NO  , KC_SEMICOLON      , KC_NO      , KC_NO      , KC_UNDERSCORE  ,
+        KC_NO  , KC_SEMICOLON      , KC_CIRC      , KC_PERC      , KC_UNDERSCORE  ,
         KC_BSLS  , LSFT(KC_R) ,
         KC_NO    , KC_NO
     ),
@@ -67,40 +67,30 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     )
 };
 
-// Shift+Space -> Caps Lock
-const key_override_t sh_spc_to_caps =
-    ko_make_with_layers_and_negmods(
-        MOD_MASK_SHIFT,     // when Shift is held…
-        KC_SPC,             // …and Space is pressed…
-        KC_CAPS,            // …send Caps Lock
-        ~0,                 // active on all layers
-        MOD_MASK_CTRL | MOD_MASK_ALT | MOD_MASK_GUI   // but NOT if other mods are down
-    );
-
-// Shift + %  ->  £
-const key_override_t sh_perc__to__pound =
-  ko_make_basic(MOD_MASK_SHIFT, KC_PERC, KC_POUND);
-
-// Shift + ^  ->  @
-const key_override_t sh_hat__to__at =
-  ko_make_basic(MOD_MASK_SHIFT, KC_CIRC, KC_AT);
-
-// Shift + '  ->  #
-const key_override_t sh_quot__to__hash =
-  ko_make_basic(MOD_MASK_SHIFT, KC_QUOT, KC_HASH);
+// Shift + BSPC  ->  DEL
+const key_override_t sh_bspc__to__del =
+  ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
 
 const key_override_t *key_overrides[] = {
-  &sh_spc_to_caps,
-  &sh_perc__to__pound,
-  &sh_hat__to__at,
-  &sh_quot__to__hash,
+  &sh_bspc__to__del,
   NULL
 };
-
 
 static bool tap(uint16_t keycode) {
     tap_code16(keycode);
     return false;
+}
+
+static inline bool unlock_all_layer_locks(void) {
+    bool had_lock = false;
+    // Adjust upper bound if you use many layers; 32 is plenty for most keymaps
+    for (uint8_t l = 0; l < 32; l++) {
+        if (is_layer_locked(l)) {
+            layer_lock_off(l);
+            had_lock = true;
+        }
+    }
+    return had_lock;
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
@@ -108,12 +98,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!record->tap.count) return true;
 
     switch (keycode) {
-        case LT(_FN, KC_PERC): return tap(KC_PERC);
         case LOPT_T(KC_LPRN): return tap(KC_LPRN);
         case LCTL_T(KC_RPRN): return tap(KC_RPRN);
         case LCMD_T(KC_RABK): return tap(KC_RABK);
         case LOPT_T(KC_LABK): return tap(KC_LABK);
-        case LCTL_T(KC_MINUS): return tap(KC_MINUS);
+        case LCTL_T(KC_PLUS): return tap(KC_PLUS);
+        case LOPT_T(LCTL(LSFT(KC_BSPC))): return tap(LCTL(LSFT(KC_BSPC)));
+    }
+
+    // Shift + Space -> CAP WORD
+    if (get_mods() & MOD_MASK_SHIFT && get_tap_keycode(keycode) == KC_SPC) {
+        caps_word_toggle();
+        return false;
+    }
+
+    if (get_tap_keycode(keycode) == KC_ESC) {
+        if (unlock_all_layer_locks()) {
+            // Swallow ESC if a layer was unlocked.
+            return false;
+        }
     }
 
     return true;
@@ -166,8 +169,8 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
                 return 0; // Optimisation: Allows symbols and shifted chars immediately after a space 
             }
 
-            // Lower value is possible here as space is basically never an SFB or double-tapped (unlike R) so is faster,
-            // plus requires less thinking to type space, so generally seems faster / can get away with a shorter flow 
+            // Lower value is possible here (compared to "R" below) as space is basically never an SFB or double-tapped (unlike R) 
+            // so is faster, plus requires less thinking to type space, so generally seems faster / can get away with a shorter flow 
             // tap timeout to allow the symbols layer to be more responsive.
             return 50; 
         case KC_R:
@@ -176,8 +179,8 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
             }
 
             // Seems to be the lowest number to allow us to consistently type words like "terror" -- with 2 consecutive Rs which are slower -- within a flow tap.
-            // The lower the better (we still want "R" to be in flow tap), but if we get faster at typing and can make this
-            // lower, then it will result in fewer accidently "r" taps when we actually wanted "shift" holds instead.
+            // The lower the better (to make "SHIFT" more responsive, preventing unwanted "R" taps being registered mid-prose when we really wanted a shift) 
+            // while still being high enough to allow slower words like "terror" with double Rs to be fully within the flow tap term for each R.
             return 90; 
     }
 

@@ -5,7 +5,10 @@
 
 // Tap Hold
 // https://docs.qmk.fm/tap_hold
-#define FLOW_TAP_TERM 500 // Max: 500 https://github.com/qmk/qmk_firmware/blob/8f728aa7311f3d66d8c7b68bf85e5da605909b4c/quantum/action_tapping.c#L871
+// FLOW_TAP_TERM MAX: 500 https://github.com/qmk/qmk_firmware/blob/8f728aa7311f3d66d8c7b68bf85e5da605909b4c/quantum/action_tapping.c#L871
+// - We use a LONG flow tap term, as we don't care so much about accessing shortcuts (CMD, ALT, CTRL) mid-prose, and are
+//   more interested in a snappier feel. We heavily optimise our layer modifiers with lower per-key flow tap terms.
+#define FLOW_TAP_TERM 500 
 #define TAPPING_TERM 200
 #define TAPPING_TERM_PER_KEY
 #define PERMISSIVE_HOLD
