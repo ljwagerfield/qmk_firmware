@@ -6,6 +6,7 @@ enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN, _HYP1 };
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
     UNLOCK_SCROLL,
+    UNLOCK_SCROLL_ESC,
     GOTO_LINE
 };
 
@@ -39,7 +40,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO     , KC_7      , KC_8      , KC_9      , KC_NO   ,
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
         KC_TRNS     , KC_LSFT     ,
-        UNLOCK_SCROLL  , UNLOCK_SCROLL
+        UNLOCK_SCROLL  , UNLOCK_SCROLL_ESC
     ),
     [_GOTO_LINE] = LAYOUT_split_3x5_2(
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
@@ -134,11 +135,12 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // Prevents us calling code x2 times (once for up and once for down)...
+    // On key up, perform normal behaviour.
     if (!record->event.pressed) {
         return true;
     }
 
+    // On key down, perform the following behavior.
     if (keycode == GOTO_LINE) {
         tap(KC_TOGGLE_SCROLL);
         goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));
@@ -148,6 +150,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         layer_lock_off(_SCROLL);
         return tap(KC_TOGGLE_SCROLL);
     }
+    if (keycode == UNLOCK_SCROLL_ESC) {
+        layer_lock_off(_SCROLL);
+        return tap(KC_ESC);
+    }    
     if (keycode == KC_ENT) {
         if (is_layer_locked(_GOTO_LINE)) {
             layer_lock_off(_GOTO_LINE);
