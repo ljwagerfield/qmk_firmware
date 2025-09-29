@@ -134,32 +134,37 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // These are always taps (no hold state) so must go before the below IF guards to be registered
-    if (keycode == UNLOCK_SCROLL) {
-        layer_lock_off(_SCROLL);
-        return tap(KC_ESC);
+    // Prevents us calling code x2 times (once for up and once for down)...
+    if (!record->event.pressed) {
+        return true;
     }
+
     if (keycode == GOTO_LINE) {
-        tap(KC_ESC);
+        tap(KC_TOGGLE_SCROLL);
         goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));
         return false;
+    }
+    if (keycode == UNLOCK_SCROLL) {
+        layer_lock_off(_SCROLL);
+        return tap(KC_TOGGLE_SCROLL);
     }
     if (keycode == KC_ENT) {
         if (is_layer_locked(_GOTO_LINE)) {
             layer_lock_off(_GOTO_LINE);
         }
     }
-
-    if ((get_tap_keycode(keycode) == KC_ESC && !record->event.pressed) || keycode == KC_ESC) {
+    if (record->tap.count ? get_tap_keycode(keycode) == KC_ESC : keycode == KC_ESC) {
         if (unlock_all_layer_locks()) {
             // Swallow ESC if a layer was unlocked.
             return false;
         }
     }
 
-    // The following code all refers to behaviours for tap actions on dual-action keys, hence these guards... 
-    if (!record->event.pressed) return true;
-    if (!record->tap.count) return true;
+    // We only want this guard for dual-function key handlers (which follow below)...
+    if (!record->tap.count) {
+        return true;
+    }
+
 
     switch (keycode) {
         case LOPT_T(KC_LPRN): return tap(KC_LPRN);
@@ -188,7 +193,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     if (keycode == LSFT_T(KC_SPC)) {
         if (!is_layer_locked(_NUM)) {
-            goto_lock_and_send(_SCROLL, LCTL(LSFT(KC_BSPC)));
+            goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
             return false;
         }
     }

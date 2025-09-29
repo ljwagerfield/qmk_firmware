@@ -19,12 +19,8 @@
 
 // Caps Word
 // https://docs.qmk.fm/features/caps_word
-#define DOUBLE_TAP_SHIFT_TURNS_ON_CAPS_WORD
 #define CAPS_WORD_IDLE_TIMEOUT 5000
-
-// Custom Keycodes
-#define KC_DICT LCTL(LOPT(KC_D)) // 🎙️ Dictation
-#define KC_DICTATION KC_DICT     // 🎙️ Dictation
 
 #define KC_POUND LSFT(KC_3) // 💰 £
 #define KC_HSH LOPT(KC_3)
+#define KC_TOGGLE_SCROLL LCTL(LSFT(KC_BSPC))
