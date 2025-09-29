@@ -1,10 +1,11 @@
 // clang-format off
 #include QMK_KEYBOARD_H
 
-enum layers { _ALPHA, _NUM, _ARR, _SYM, _FN, _HYP1 };
+enum layers { _ALPHA, _NUM, _SCROLL, _ARR, _SYM, _FN, _HYP1 };
 
 enum custom_keycodes {
-    LOCK_NUM = SAFE_RANGE
+    LOCK_NUM = SAFE_RANGE,
+    UNLOCK_SCROLL
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -21,13 +22,23 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [_NUM] = LAYOUT_split_3x5_2(
         LSFT(KC_3)     , KC_1      , KC_2      , KC_3      , KC_NO     ,
-        KC_NO   ,    KC_CIRC, KC_SLSH  ,    KC_PERC     ,KC_NO,
+        KC_LPRN   ,    KC_CIRC, KC_SLSH  ,    KC_PERC     ,KC_RPRN,
         KC_DOT  , KC_4   , LT(_ARR, KC_5)  , KC_6    , KC_NO   ,
-        KC_NO     , RCMD_T(LOCK_NUM)      ,KC_KP_ASTERISK       , LCTL_T(KC_PLUS)      , LOPT_T(KC_MINUS)      ,
+        KC_TILDE     , RCMD_T(LOCK_NUM)      ,KC_KP_ASTERISK       , LCTL_T(KC_PLUS)      , LOPT_T(KC_MINUS)      ,
         KC_DOLLAR     , KC_7      , KC_8      , KC_9      , KC_NO   ,
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
         KC_TRNS     , KC_0     ,
         LSFT_T(KC_SPC)  , KC_TRNS
+    ),
+    [_SCROLL] = LAYOUT_split_3x5_2(
+        KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
+        KC_NO   ,    KC_NO, KC_W  ,    KC_NO     ,KC_NO,
+        KC_NO  , KC_4   , KC_5  , KC_6    , KC_NO   ,
+        KC_NO     , KC_A      ,KC_S       , KC_D      , KC_NO      ,
+        KC_NO     , KC_7      , KC_8      , KC_9      , KC_NO   ,
+        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
+        KC_TRNS     , KC_LSFT     ,
+        UNLOCK_SCROLL  , UNLOCK_SCROLL
     ),
     [_ARR] = LAYOUT_split_3x5_2(
         KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
@@ -112,6 +123,12 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    // Not sure why, but this custom keycode doesn't pass the 'event.pressed' or 'tap.count' checks below, so put this before.
+    if (keycode == UNLOCK_SCROLL) {
+        layer_lock_off(_SCROLL);
+        return tap(KC_ESC);
+    }
+
     if (!record->event.pressed) return true;
     if (!record->tap.count) return true;
 
@@ -149,7 +166,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     if (keycode == LSFT_T(KC_SPC)) {
         if (!is_layer_locked(_NUM)) {
-            goto_lock_and_send(_ARR, LCTL(LSFT(KC_BSPC)));
+            goto_lock_and_send(_SCROLL, LCTL(LSFT(KC_BSPC)));
             return false;
         }
     }
