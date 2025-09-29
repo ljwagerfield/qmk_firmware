@@ -1,11 +1,12 @@
 // clang-format off
 #include QMK_KEYBOARD_H
 
-enum layers { _ALPHA, _NUM, _SCROLL, _ARR, _SYM, _FN, _HYP1 };
+enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN, _HYP1 };
 
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
-    UNLOCK_SCROLL
+    UNLOCK_SCROLL,
+    GOTO_LINE
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -34,11 +35,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
         KC_NO   ,    KC_NO, KC_W  ,    KC_NO     ,KC_NO,
         KC_NO  , KC_4   , KC_5  , KC_6    , KC_NO   ,
-        KC_NO     , KC_A      ,KC_S       , KC_D      , KC_NO      ,
+        KC_NO     , KC_A      ,KC_S       , KC_D      , GOTO_LINE      ,
         KC_NO     , KC_7      , KC_8      , KC_9      , KC_NO   ,
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
         KC_TRNS     , KC_LSFT     ,
         UNLOCK_SCROLL  , UNLOCK_SCROLL
+    ),
+    [_GOTO_LINE] = LAYOUT_split_3x5_2(
+        KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
+        KC_NO   ,    KC_NO, KC_NO  ,    KC_NO     ,KC_NO,
+        KC_NO  , KC_4   , KC_5  , KC_6    , KC_NO   ,
+        KC_NO     , KC_COLN      ,KC_NO       , KC_NO      , KC_NO      ,
+        KC_NO     , KC_7      , KC_8      , KC_9      , KC_NO   ,
+        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_NO   ,
+        KC_TRNS     , KC_0     ,
+        KC_ESC  , KC_ESC
     ),
     [_ARR] = LAYOUT_split_3x5_2(
         KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
@@ -64,7 +75,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO , KC_NO     , LCTL(LCMD(KC_Q))     , KC_NO     , KC_NO     ,
         KC_NO , KC_F1   , KC_F2   , KC_F3   , KC_F4   , 
         KC_NO , KC_MPRV   , KC_MPLY   , KC_MNXT   , KC_NO   ,
-        KC_NO , KC_F5 , KC_F6 , KC_F7  , KC_F8  ,
+        KC_NO , KC_F5 , KC_F6 , KC_F7  , KC_F8  , 
         KC_NO , KC_VOLD     , KC_MUTE    , KC_VOLU    , KC_NO    ,
         KC_NO , KC_F9 , KC_F10   , KC_F11   , KC_F12   , 
         KC_NO   , KC_NO   ,
@@ -123,12 +134,30 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // Not sure why, but this custom keycode doesn't pass the 'event.pressed' or 'tap.count' checks below, so put this before.
+    // These are always taps (no hold state) so must go before the below IF guards to be registered
     if (keycode == UNLOCK_SCROLL) {
         layer_lock_off(_SCROLL);
         return tap(KC_ESC);
     }
+    if (keycode == GOTO_LINE) {
+        tap(KC_ESC);
+        goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));
+        return false;
+    }
+    if (keycode == KC_ENT) {
+        if (is_layer_locked(_GOTO_LINE)) {
+            layer_lock_off(_GOTO_LINE);
+        }
+    }
 
+    if ((get_tap_keycode(keycode) == KC_ESC && !record->event.pressed) || keycode == KC_ESC) {
+        if (unlock_all_layer_locks()) {
+            // Swallow ESC if a layer was unlocked.
+            return false;
+        }
+    }
+
+    // The following code all refers to behaviours for tap actions on dual-action keys, hence these guards... 
     if (!record->event.pressed) return true;
     if (!record->tap.count) return true;
 
@@ -145,13 +174,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (get_mods() & MOD_MASK_SHIFT && get_tap_keycode(keycode) == KC_SPC) {
         caps_word_toggle();
         return false;
-    }
-
-    if (get_tap_keycode(keycode) == KC_ESC) {
-        if (unlock_all_layer_locks()) {
-            // Swallow ESC if a layer was unlocked.
-            return false;
-        }
     }
 
     if (keycode == RCMD_T(LOCK_NUM)) {
