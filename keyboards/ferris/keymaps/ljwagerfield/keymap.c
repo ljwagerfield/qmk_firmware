@@ -34,9 +34,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     [_SCROLL] = LAYOUT_split_3x5_2(
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
-        KC_NO   ,    KC_NO, KC_W  ,    KC_NO     ,KC_NO,
-        KC_NO  , KC_4   , KC_5  , KC_6    , KC_NO   ,
-        KC_NO     , KC_A      ,KC_S       , KC_D      , GOTO_LINE      ,
+        KC_NO   ,    KC_NO, KC_K  ,    KC_NO      ,KC_U,
+        GOTO_LINE  , KC_4   , KC_5  , KC_6    , KC_NO   ,
+        KC_NO     , KC_H      ,KC_J       , KC_L      , KC_D      ,
         KC_NO     , KC_7      , KC_8      , KC_9      , KC_NO   ,
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
         KC_TRNS     , KC_LSFT     ,
@@ -152,6 +152,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     if (keycode == UNLOCK_SCROLL_ESC) {
         layer_lock_off(_SCROLL);
+        tap(KC_TOGGLE_SCROLL);
         return tap(KC_ESC);
     }    
     if (keycode == KC_ENT) {
