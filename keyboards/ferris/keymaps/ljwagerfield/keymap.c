@@ -1,7 +1,7 @@
 // clang-format off
 #include QMK_KEYBOARD_H
 
-enum layers { _ALPHA, _NUM, _ARR, _SCROLL, _GOTO_LINE, _SYM, _FN, _HYP1 };
+enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN, _HYP1 };
 
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
@@ -15,8 +15,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_ALPHA] = LAYOUT_split_3x5_2(
         KC_B      , KC_P      , KC_D      , KC_L      , KC_J      ,
         KC_QUOT     , KC_U      , KC_O      , KC_Y      , KC_Q      ,
-        LOPT_T(KC_S) , LCTL_T(KC_N) , LT(_ARR, KC_T) , LCMD_T(KC_H) , LT(_HYP1, KC_K)      ,
-        LT(_HYP1, KC_Z)    , LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C) ,
+        LOPT_T(KC_S) , LCTL_T(KC_N) , LT(_ARR, KC_T) , LCMD_T(KC_H) , KC_K      ,
+        KC_Z    , LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C) ,
         KC_F      , KC_W      , KC_G      , KC_M      , LOPT(KC_3)     ,
         KC_AT  , KC_ENT    , KC_BSPC   , KC_TAB      , KC_V    ,
         LT(_FN, KC_X)    , LSFT_T(KC_R)   , 
@@ -31,16 +31,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
         KC_TRNS     , KC_0     ,
         LSFT_T(KC_SPC)  , KC_TRNS
-    ),
-    [_ARR] = LAYOUT_split_3x5_2(
-        KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
-        KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
-        LCMD(KC_X), LCMD(KC_C), KC_NO, QK_LAYER_LOCK, KC_NO,
-        LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
-        KC_NO   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
-        KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
-        KC_TRNS  , KC_LSFT ,
-        KC_SPC     , KC_TRNS
     ),
     [_SCROLL] = LAYOUT_split_3x5_2(
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
@@ -61,6 +51,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_NO   ,
         KC_TRNS     , KC_0     ,
         KC_ESC  , KC_ESC
+    ),
+    [_ARR] = LAYOUT_split_3x5_2(
+        KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
+        KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
+        LCMD(KC_X), LCMD(KC_C), KC_NO, QK_LAYER_LOCK, KC_NO,
+        LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
+        KC_NO   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
+        KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
+        KC_TRNS  , KC_LSFT ,
+        LSFT_T(KC_SPC)     , KC_TRNS
     ),
     [_SYM] = LAYOUT_split_3x5_2(
         KC_EXLM         , KC_GRAVE, KC_DOLLAR      , KC_LCBR      , KC_RCBR   ,
@@ -112,12 +112,10 @@ static inline bool unlock_all_layer_locks(void) {
     bool had_lock = false;
     // Adjust upper bound if you use many layers; 32 is plenty for most keymaps
     for (uint8_t l = 0; l < 32; l++) {
-
         if (is_layer_locked(l)) {
+            layer_lock_off(l);
             had_lock = true;
         }
-            layer_lock_off(l);
-
     }
     return had_lock;
 }
@@ -129,7 +127,8 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
     // Move to target layer immediately
     layer_move(target_layer);
 
-    // Lock that layer so Esc (below) can unlock it    layer_lock_on(target_layer);
+    // Lock that layer so Esc (below) can unlock it
+    layer_lock_on(target_layer);
 
     // Send the host key
     tap_code16(send_keycode);
@@ -148,13 +147,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
     if (keycode == UNLOCK_SCROLL) {
-        unlock_all_layer_locks();
-        layer_move(_ALPHA);
+        layer_lock_off(_SCROLL);
         return tap(KC_TOGGLE_SCROLL);
     }
     if (keycode == UNLOCK_SCROLL_ESC) {
-        unlock_all_layer_locks();
-        layer_move(_ALPHA);
+        layer_lock_off(_SCROLL);
         tap(KC_TOGGLE_SCROLL);
         return tap(KC_ESC);
     }    
@@ -162,10 +159,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (is_layer_locked(_GOTO_LINE)) {
             layer_lock_off(_GOTO_LINE);
         }
-    }
-    if (keycode == KC_SPC && layer_state_is(_ARR) && !is_layer_locked(_ARR)) {
-        goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
-        return false;
     }
     if (record->tap.count ? get_tap_keycode(keycode) == KC_ESC : keycode == KC_ESC) {
         if (unlock_all_layer_locks()) {
@@ -203,6 +196,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             layer_lock_on(_NUM);
         }
         return false;
+    }
+
+    if (keycode == LSFT_T(KC_SPC)) {
+        if (!is_layer_locked(_ARR)) {
+            goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
+            return false;
+        }
     }
 
     return true;
