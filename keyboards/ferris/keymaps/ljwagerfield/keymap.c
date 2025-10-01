@@ -5,6 +5,7 @@ enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN, _HYP1 };
 
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
+    LOCK_SCROLL_SPC,
     UNLOCK_SCROLL,
     UNLOCK_SCROLL_ESC,
     GOTO_LINE
@@ -60,7 +61,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
         KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
         KC_TRNS  , KC_LSFT ,
-        LSFT_T(KC_SPC)     , KC_TRNS
+        LOCK_SCROLL_SPC     , KC_TRNS
     ),
     [_SYM] = LAYOUT_split_3x5_2(
         KC_EXLM         , KC_GRAVE, KC_DOLLAR      , KC_LCBR      , KC_RCBR   ,
@@ -166,12 +167,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
         }
     }
+    if (keycode == LOCK_SCROLL_SPC) {
+        if (is_layer_locked(_ARR)) {
+            return tap(KC_SPC);
+        }
+        else {
+            goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
+            return false;
+        }
+    }
 
     // We only want this guard for dual-function key handlers (which follow below)...
     if (!record->tap.count) {
         return true;
     }
-
 
     switch (keycode) {
         case LOPT_T(KC_LPRN): return tap(KC_LPRN);
@@ -198,17 +207,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
-    if (keycode == LSFT_T(KC_SPC)) {
-        if (!is_layer_locked(_ARR)) {
-            goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
-            return false;
-        }
-    }
-
     return true;
 }
 
-bool is_prev_flow_tap_key(uint16_t keycode) {
+    bool is_prev_flow_tap_key(uint16_t keycode) {
     switch (get_tap_keycode(keycode)) {
         // TODO: Add all symbols here.
         case KC_SPC:
