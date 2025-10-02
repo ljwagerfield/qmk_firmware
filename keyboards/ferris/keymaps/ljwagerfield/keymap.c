@@ -177,11 +177,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
         }
     }
-    // --- End of Hyper Rewrite Logic ---
+    // --- End of Alt -> Hyper Logic ---
 
 
-    // --- Your existing logic (mostly untouched) ---
-    if (!record->event.pressed) { // On key up, for the rest of the function
+    if (!record->event.pressed) {
+        // On key up, perform normal QMK behaviour.
         return true;
     }
 
