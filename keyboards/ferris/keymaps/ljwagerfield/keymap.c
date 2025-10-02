@@ -1,7 +1,7 @@
 // clang-format off
 #include QMK_KEYBOARD_H
 
-enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN, _HYP1 };
+enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN };
 
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
@@ -21,7 +21,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_F      , KC_W      , KC_G      , KC_M      , LOPT(KC_3)     ,
         KC_AT  , KC_ENT    , KC_BSPC   , KC_TAB      , KC_V    ,
         LT(_FN, KC_X)    , LSFT_T(KC_R)   , 
-        LT(_SYM, KC_SPC)  , LT(_HYP1, KC_ESC)
+        LT(_SYM, KC_SPC)  , KC_ESC
     ),
     [_NUM] = LAYOUT_split_3x5_2(
         LSFT(KC_3)     , KC_1      , KC_2      , KC_3      , KC_NO     ,
@@ -82,26 +82,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO , KC_F9 , KC_F10   , KC_F11   , KC_F12   , 
         KC_NO   , KC_NO   ,
         KC_NO   , QK_BOOT
-    ),
-    [_HYP1] = LAYOUT_split_3x5_2(
-        HYPR(KC_B) , HYPR(KC_P) ,  HYPR(KC_D) , HYPR(KC_L) , HYPR(KC_J) ,
-        KC_NO , HYPR(KC_U) , HYPR(KC_O) , HYPR(KC_Y) , HYPR(KC_Q) ,
-        HYPR(KC_S) , HYPR(KC_N) , HYPR(KC_T) , HYPR(KC_H) , HYPR(KC_K) ,
-        HYPR(KC_Z) , HYPR(KC_A) , HYPR(KC_E) , HYPR(KC_I) , HYPR(KC_C) ,
-        HYPR(KC_F) , HYPR(KC_W) , HYPR(KC_G) , HYPR(KC_M) , KC_NO ,
-        KC_NO , HYPR(KC_ENT) , HYPR(KC_BSPC) , HYPR(KC_TAB) , HYPR(KC_V) ,
-        HYPR(KC_X) , HYPR(KC_R) ,
-        KC_NO , KC_NO
     )
-};
-
-// Shift + BSPC  ->  DEL
-const key_override_t sh_bspc__to__del =
-  ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL);
-
-const key_override_t *key_overrides[] = {
-  &sh_bspc__to__del,
-  NULL
 };
 
 static bool tap(uint16_t keycode) {
@@ -135,50 +116,120 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
     tap_code16(send_keycode);
 }
 
+static bool handle_alt_to_hyper(uint16_t keycode) {
+    // 1. Check if the key is an alpha character.
+    if (!(keycode >= KC_A && keycode <= KC_Z)) {
+        return true; // Not for us, process normally.
+    }
+
+    uint8_t mods = get_mods();
+    bool alt_is_held = (mods & MOD_MASK_ALT) != 0;
+    bool shift_is_held = (mods & MOD_MASK_SHIFT) != 0;
+    bool other_mods_are_held = (mods & (MOD_MASK_CTRL | MOD_MASK_GUI)) != 0;
+
+    // CASE 1: Alt + Shift are held (but not Ctrl or GUI)
+    if (alt_is_held && shift_is_held && !other_mods_are_held) {
+        uint16_t target_keycode;
+        // Get the 0-indexed position of the letter in the alphabet (A=0, Z=25)
+        uint8_t alpha_pos = keycode - KC_A;
+
+        if (alpha_pos < 24) {
+            // A-X (positions 0-23) map to F1-F24
+            target_keycode = KC_F1 + alpha_pos;
+        } else {
+            // Y (position 24) -> 0
+            // Z (position 25) -> 1
+            target_keycode = KC_0 + (alpha_pos - 24);
+        }
+
+        tap_code16(HYPR(target_keycode));
+        return false; // We handled it, stop further processing.
+    }
+
+    // CASE 2: Alt-only is held (but not Shift, Ctrl, or GUI)
+    if (alt_is_held && !shift_is_held && !other_mods_are_held) {
+        tap_code16(HYPR(keycode));
+        return false; // We handled it, stop further processing.
+    }
+
+    // No specific Alt or Alt+Shift combo was matched, so process normally.
+    return true;
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // On key up, perform normal behaviour.
-    if (!record->event.pressed) {
+    // --- Re-write Alt+Alpha to Hyper+Alpha. ---
+    uint16_t base_keycode = get_tap_keycode(keycode);
+
+    if (IS_QK_MOD_TAP(keycode) || IS_QK_LAYER_TAP(keycode)) {
+        // For any Mod-Tap or Layer-Tap key...
+        if (record->event.pressed && record->tap.count > 0) {
+            // ...on keyup, IF it was a tap, check if we should trigger the HYPR mapping.
+            if (!handle_alt_to_hyper(base_keycode)) {
+                return false; // Handler consumed the event.
+            }
+        }
+    } else {
+        // For any other normal key...
+        if (record->event.pressed) {
+            // ...on keydown, check if we should trigger the HYPR mapping.
+            if (!handle_alt_to_hyper(base_keycode)) {
+                return false; // Handler consumed the event.
+            }
+        }
+    }
+    // --- End of Hyper Rewrite Logic ---
+
+
+    // --- Your existing logic (mostly untouched) ---
+    if (!record->event.pressed) { // On key up, for the rest of the function
         return true;
     }
 
     // On key down, perform the following behavior.
-    if (keycode == GOTO_LINE) {
-        tap(KC_TOGGLE_SCROLL);
-        goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));
-        return false;
+    switch (keycode) {
+        case GOTO_LINE:
+            tap(KC_TOGGLE_SCROLL);
+            goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));
+            return false;
+        case UNLOCK_SCROLL:
+            layer_lock_off(_SCROLL);
+            return tap(KC_TOGGLE_SCROLL);
+        case UNLOCK_SCROLL_ESC:
+            layer_lock_off(_SCROLL);
+            tap(KC_TOGGLE_SCROLL);
+            return tap(KC_ESC);
+        case KC_ENT:
+            if (is_layer_locked(_GOTO_LINE)) {
+                layer_lock_off(_GOTO_LINE);
+            }
+            break; // Let KC_ENT pass through
+        case LOCK_SCROLL_SPC:
+            if (is_layer_locked(_ARR)) {
+                return tap(KC_SPC);
+            } else {
+                goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
+                return false;
+            }
+        case RCMD_T(LOCK_NUM):
+             if (record->tap.count > 0) { // Ensure this is a tap
+                if (is_layer_locked(_NUM)) {
+                    layer_lock_off(_NUM);
+                } else {
+                    layer_lock_on(_NUM);
+                }
+                return false;
+            }
+            return true; // Pass through hold
     }
-    if (keycode == UNLOCK_SCROLL) {
-        layer_lock_off(_SCROLL);
-        return tap(KC_TOGGLE_SCROLL);
-    }
-    if (keycode == UNLOCK_SCROLL_ESC) {
-        layer_lock_off(_SCROLL);
-        tap(KC_TOGGLE_SCROLL);
-        return tap(KC_ESC);
-    }    
-    if (keycode == KC_ENT) {
-        if (is_layer_locked(_GOTO_LINE)) {
-            layer_lock_off(_GOTO_LINE);
-        }
-    }
-    if (record->tap.count ? get_tap_keycode(keycode) == KC_ESC : keycode == KC_ESC) {
+
+    if (get_tap_keycode(keycode) == KC_ESC) {
         if (unlock_all_layer_locks()) {
-            // Swallow ESC if a layer was unlocked.
-            return false;
-        }
-    }
-    if (keycode == LOCK_SCROLL_SPC) {
-        if (is_layer_locked(_ARR)) {
-            return tap(KC_SPC);
-        }
-        else {
-            goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
-            return false;
+            return false; // Swallow ESC if a layer was unlocked.
         }
     }
 
     // We only want this guard for dual-function key handlers (which follow below)...
-    if (!record->tap.count) {
+    if (record->tap.count == 0) {
         return true;
     }
 
@@ -197,20 +248,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false;
     }
 
-    if (keycode == RCMD_T(LOCK_NUM)) {
-        if (is_layer_locked(_NUM)) {
-            layer_lock_off(_NUM);
-        }
-        else {
-            layer_lock_on(_NUM);
-        }
-        return false;
-    }
-
     return true;
 }
 
-    bool is_prev_flow_tap_key(uint16_t keycode) {
+bool is_prev_flow_tap_key(uint16_t keycode) {
     switch (get_tap_keycode(keycode)) {
         // TODO: Add all symbols here.
         case KC_SPC:
@@ -301,3 +342,12 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
             return TAPPING_TERM; 
     }
 }
+
+// Collect all overrides here
+const key_override_t *key_overrides[] = {
+
+    // Shift + BSPC  ->  DEL
+    &(ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL)),
+    
+    NULL
+};
