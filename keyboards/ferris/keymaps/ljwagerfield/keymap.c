@@ -5,7 +5,7 @@ enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN };
 
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
-    LOCK_SCROLL_SPC,
+    LOCK_SCROLL,
     UNLOCK_SCROLL,
     UNLOCK_SCROLL_ESC,
     GOTO_LINE
@@ -39,7 +39,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         GOTO_LINE  , KC_4   , KC_5  , KC_6    , KC_NO   ,
         KC_NO     , KC_H      ,KC_J       , KC_L      , KC_D      ,
         KC_NO     , KC_7      , KC_8      , KC_9      , KC_NO   ,
-        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
+        KC_NO     , UNLOCK_SCROLL   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
         KC_TRNS     , KC_LSFT     ,
         UNLOCK_SCROLL  , UNLOCK_SCROLL_ESC
     ),
@@ -59,9 +59,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         LCMD(KC_X), LCMD(KC_C), KC_NO, QK_LAYER_LOCK, KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
         KC_NO   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
-        KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
+        KC_NO  , LOCK_SCROLL      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
         KC_TRNS  , KC_LSFT ,
-        LOCK_SCROLL_SPC     , KC_TRNS
+        KC_SPC     , KC_TRNS
     ),
     [_SYM] = LAYOUT_split_3x5_2(
         KC_EXLM         , KC_GRAVE, KC_DOLLAR      , KC_LCBR      , KC_RCBR   ,
@@ -203,9 +203,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 layer_lock_off(_GOTO_LINE);
             }
             break; // Let KC_ENT pass through
-        case LOCK_SCROLL_SPC:
+        case LOCK_SCROLL:
             if (is_layer_locked(_ARR)) {
-                return tap(KC_SPC);
+                return tap(KC_ENT);
             } else {
                 goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
                 return false;
