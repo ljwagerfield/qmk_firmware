@@ -14,11 +14,11 @@ enum custom_keycodes {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Alpha (Hands Down Prometheus)
     [_ALPHA] = LAYOUT_split_3x5_2(
-        KC_B      , KC_P      , KC_D      , KC_L      , KC_J      ,
+        KC_F      , KC_P      , KC_D      , KC_L      , KC_J      ,
         KC_QUOT     , KC_U      , KC_O      , KC_Y      , KC_Q      ,
         LOPT_T(KC_S) , LCTL_T(KC_N) , LT(_ARR, KC_T) , LCMD_T(KC_H) , KC_K      ,
         KC_Z    , LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C) ,
-        KC_F      , KC_W      , KC_G      , KC_M      , LOPT(KC_3)     ,
+        KC_B      , KC_W      , KC_G      , KC_M      , LOPT(KC_3)     ,
         KC_AT  , KC_ENT    , KC_BSPC   , KC_TAB      , KC_V    ,
         LT(_FN, KC_X)    , LSFT_T(KC_R)   , 
         LT(_SYM, KC_SPC)  , KC_ESC
