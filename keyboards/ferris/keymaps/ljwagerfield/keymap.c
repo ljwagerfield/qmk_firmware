@@ -196,6 +196,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     // On key down, perform the following behavior.
     switch (keycode) {
+        case KC_G:
+            if (get_mods() == MOD_BIT(KC_LGUI)) {
+                // When user presses Command + G, automatically lock the _GOTO_LINE layer for them, so they can easily type in numbers.
+                goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));    
+                return false;
+            }
+            break;
         case GOTO_LINE:
             tap(KC_TOGGLE_SCROLL);
             goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));
