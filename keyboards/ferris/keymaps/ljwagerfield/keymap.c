@@ -5,6 +5,7 @@ enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN };
 
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
+    LOCK_ARR,
     LOCK_SCROLL,
     UNLOCK_SCROLL,
     UNLOCK_SCROLL_ESC,
@@ -56,7 +57,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_ARR] = LAYOUT_split_3x5_2(
         KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
         KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
-        LCMD(KC_X), LCMD(KC_C), KC_NO, QK_LAYER_LOCK, KC_NO,
+        LCMD(KC_X), LCMD(KC_C), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
         KC_NO   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
         KC_NO  , LOCK_SCROLL      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
@@ -156,6 +157,14 @@ static bool handle_alt_to_hyper(uint16_t keycode) {
     return true;
 }
 
+static inline void lock_layer(uint8_t target_layer) {
+    if (is_layer_locked(target_layer)) {
+        layer_lock_off(target_layer);
+    } else {
+        layer_lock_on(target_layer);
+    }
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // --- Re-write Alt+Alpha to Hyper+Alpha. ---
     uint16_t base_keycode = get_tap_keycode(keycode);
@@ -212,11 +221,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
         case RCMD_T(LOCK_NUM):
              if (record->tap.count > 0) { // Ensure this is a tap
-                if (is_layer_locked(_NUM)) {
-                    layer_lock_off(_NUM);
-                } else {
-                    layer_lock_on(_NUM);
-                }
+                lock_layer(_NUM);
+                return false;
+            }
+            return true; // Pass through hold
+        case LCMD_T(LOCK_ARR):
+             if (record->tap.count > 0) { // Ensure this is a tap
+                lock_layer(_ARR);
                 return false;
             }
             return true; // Pass through hold
@@ -234,6 +245,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 
     switch (keycode) {
+        case LCMD_T(QK_LAYER_LOCK): return tap(QK_LAYER_LOCK);
         case LOPT_T(KC_LPRN): return tap(KC_LPRN);
         case LCTL_T(KC_RPRN): return tap(KC_RPRN);
         case LCMD_T(KC_RABK): return tap(KC_RABK);
