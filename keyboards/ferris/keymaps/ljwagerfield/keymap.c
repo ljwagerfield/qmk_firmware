@@ -57,7 +57,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_ARR] = LAYOUT_split_3x5_2(
         KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
         KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
-        LCMD(KC_X), LCMD(KC_C), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
+        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
         KC_NO   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
         KC_NO  , LOCK_SCROLL      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
@@ -252,6 +252,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case LOPT_T(KC_LABK): return tap(KC_LABK);
         case LCTL_T(KC_PLUS): return tap(KC_PLUS);
         case LOPT_T(LCTL(LSFT(KC_BSPC))): return tap(LCTL(LSFT(KC_BSPC)));
+        case LOPT_T(LCMD(KC_X)): return tap(LCMD(KC_X));
+        case LCTL_T(LCMD(KC_C)): return tap(LCMD(KC_C));
     }
 
     // Shift + Space -> CAP WORD
