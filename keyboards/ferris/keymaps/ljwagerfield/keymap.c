@@ -12,6 +12,8 @@ enum custom_keycodes {
     GOTO_LINE
 };
 
+static uint8_t last_press_mods = 0;
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Alpha (Hands Down Prometheus)
     [_ALPHA] = LAYOUT_split_3x5_2(
@@ -165,6 +167,36 @@ static inline void lock_layer(uint8_t target_layer) {
     }
 }
 
+static inline uint16_t get_tap_keycode_from_mod_tap(uint16_t keycode) {
+    switch (keycode) {
+        case LCMD_T(QK_LAYER_LOCK): return QK_LAYER_LOCK;
+        case LOPT_T(KC_LPRN): return KC_LPRN;
+        case LCTL_T(KC_RPRN): return KC_RPRN;
+        case LCMD_T(KC_RABK): return KC_RABK;
+        case LOPT_T(KC_LABK): return KC_LABK;
+        case LCTL_T(KC_PLUS): return KC_PLUS;
+        case LOPT_T(LCTL(LSFT(KC_BSPC))): return LCTL(LSFT(KC_BSPC));
+        case LOPT_T(LCMD(KC_X)): return LCMD(KC_X);
+        case LCTL_T(LCMD(KC_C)): return LCMD(KC_C);
+    }
+
+    return 0;
+}
+
+// Extract modifiers will be activated on tap, e.g. LCMD from LCMD(KC_Z)
+static inline uint8_t encoded_mods_if_pure_wrapper(uint16_t keycode, uint16_t keycode_from_mod_tap) {
+    if (keycode_from_mod_tap) {
+        // This will be a key code like LCTL_T(LCMD(KC_C)) or LOPT_T(KC_LPRN) ... The former will return LCMD, whereas the latter will return 0.
+        return QK_MODS_GET_MODS(keycode_from_mod_tap);
+    }
+    if (IS_QK_MOD_TAP(keycode) || IS_QK_LAYER_TAP(keycode)) {
+         // Return 0 as this will be a key code like LCMD_T(KC_H)
+        return 0;
+    }
+    // Handle keycodes like LCMD(KC_Z) on the arrows layer.
+    return QK_MODS_GET_MODS(keycode);
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // --- Re-write Alt+Alpha to Hyper+Alpha. ---
     uint16_t base_keycode = get_tap_keycode(keycode);
@@ -174,6 +206,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         if (record->event.pressed && record->tap.count > 0) {
             // ...on keyup, IF it was a tap, check if we should trigger the HYPR mapping.
             if (!handle_alt_to_hyper(base_keycode)) {
+                last_press_mods = MOD_MASK_CSAG; // CSAG = Hyper
                 return false; // Handler consumed the event.
             }
         }
@@ -194,6 +227,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
+    uint16_t keycode_from_mod_tap = get_tap_keycode_from_mod_tap(keycode);
+
+    // Include base, weak, and one-shot mods so you cover all cases
+    last_press_mods = encoded_mods_if_pure_wrapper(keycode, keycode_from_mod_tap) | get_mods() | get_weak_mods() | get_oneshot_mods();
+    
     // On key down, perform the following behavior.
     switch (keycode) {
         case KC_G:
@@ -251,16 +289,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    switch (keycode) {
-        case LCMD_T(QK_LAYER_LOCK): return tap(QK_LAYER_LOCK);
-        case LOPT_T(KC_LPRN): return tap(KC_LPRN);
-        case LCTL_T(KC_RPRN): return tap(KC_RPRN);
-        case LCMD_T(KC_RABK): return tap(KC_RABK);
-        case LOPT_T(KC_LABK): return tap(KC_LABK);
-        case LCTL_T(KC_PLUS): return tap(KC_PLUS);
-        case LOPT_T(LCTL(LSFT(KC_BSPC))): return tap(LCTL(LSFT(KC_BSPC)));
-        case LOPT_T(LCMD(KC_X)): return tap(LCMD(KC_X));
-        case LCTL_T(LCMD(KC_C)): return tap(LCMD(KC_C));
+    if (keycode_from_mod_tap) {
+        return tap(keycode_from_mod_tap);
     }
 
     // Shift + Space -> CAP WORD
@@ -292,10 +322,11 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
             return 0;
     }
 
-    // For faster shifted characters, we use CAG instead of CSAG. 
-    // The trade-off is that for any shortcut combination that involves a shift, 
-    // you must press shift as the last key in that shortcut combination.
-    if (get_mods() & MOD_MASK_CAG) {
+    // If previous key or current key have Ctrl, Alt, or Cmd pressed, then disable flow tap.
+    // We do this for the previous key too because performing Command + C and then Alt + Alpha 
+    // (for a hyper shortcut) is a common workflow for us. We found that without checking the 
+    // previous key's modifiers, the hyper shortcut just gets registered as alphas.
+    if ((last_press_mods | get_mods()) & MOD_MASK_CAG) {
         return 0;
     }
 
