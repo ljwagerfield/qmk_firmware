@@ -12,6 +12,7 @@ enum custom_keycodes {
     GOTO_LINE
 };
 
+// Records the modifiers that were active for the last key press.
 static uint8_t last_press_mods = 0;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -88,11 +89,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     )
 };
 
+// Basic key overrides.
+const key_override_t *key_overrides[] = {
+
+    // Shift + BSPC  ->  DEL
+    &(ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL)),
+    
+    NULL
+};
+
 static bool tap(uint16_t keycode) {
     tap_code16(keycode);
     return false;
 }
 
+// Removes all layer locks and returns you to the base layer.
 static inline bool unlock_all_layer_locks(void) {
     bool had_lock = false;
     // Adjust upper bound if you use many layers; 32 is plenty for most keymaps
@@ -105,6 +116,7 @@ static inline bool unlock_all_layer_locks(void) {
     return had_lock;
 }
 
+// Locks a particular layer and then sends a key press.
 static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycode) {
     // If you prefer only one lock at a time, clear others first:
     unlock_all_layer_locks();
@@ -119,6 +131,7 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
     tap_code16(send_keycode);
 }
 
+// Rewrites Alt+Alpha to Hyper+Alpha.
 static bool handle_alt_to_hyper(uint16_t keycode) {
     // 1. Check if the key is an alpha character.
     if (!(keycode >= KC_A && keycode <= KC_Z)) {
@@ -167,6 +180,7 @@ static inline void lock_layer(uint8_t target_layer) {
     }
 }
 
+// Returns the tap key code for a dual function key. (These are clipped due to the 16-bit size of the key codes in QMK, so we need to do the mapping here.)
 static inline uint16_t get_tap_keycode_from_mod_tap(uint16_t keycode) {
     switch (keycode) {
         case LCMD_T(QK_LAYER_LOCK): return QK_LAYER_LOCK;
@@ -183,7 +197,7 @@ static inline uint16_t get_tap_keycode_from_mod_tap(uint16_t keycode) {
     return 0;
 }
 
-// Extract modifiers will be activated on tap, e.g. LCMD from LCMD(KC_Z)
+// Returns the modifiers that will be active when this key code is tapped, e.g. LCMD from LCMD(KC_Z), LSFT from LOPT_T(LSFT(KC_A)), etc.
 static inline uint8_t encoded_mods_if_pure_wrapper(uint16_t keycode, uint16_t keycode_from_mod_tap) {
     if (keycode_from_mod_tap) {
         // This will be a key code like LCTL_T(LCMD(KC_C)) or LOPT_T(KC_LPRN) ... The former will return LCMD, whereas the latter will return 0.
@@ -197,6 +211,7 @@ static inline uint8_t encoded_mods_if_pure_wrapper(uint16_t keycode, uint16_t ke
     return QK_MODS_GET_MODS(keycode);
 }
 
+// Called on every key down and up.
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // --- Re-write Alt+Alpha to Hyper+Alpha. ---
     uint16_t base_keycode = get_tap_keycode(keycode);
@@ -229,7 +244,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     uint16_t keycode_from_mod_tap = get_tap_keycode_from_mod_tap(keycode);
 
-    // Include base, weak, and one-shot mods so you cover all cases
+    // Record all the modifiers that are active as this information is used when determining whether the flow tap should be applied to the next key.
     last_press_mods = encoded_mods_if_pure_wrapper(keycode, keycode_from_mod_tap) | get_mods() | get_weak_mods() | get_oneshot_mods();
     
     // On key down, perform the following behavior.
@@ -289,6 +304,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
+    // If this is a dual function key, then send the tap on key down.
     if (keycode_from_mod_tap) {
         return tap(keycode_from_mod_tap);
     }
@@ -302,7 +318,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-bool is_prev_flow_tap_key(uint16_t keycode) {
+// Return if this key code should be included in a FlowTap session.
+bool is_flow_tap_keycode(uint16_t keycode) {
     switch (get_tap_keycode(keycode)) {
         // TODO: Add all symbols here.
         case KC_SPC:
@@ -313,7 +330,7 @@ bool is_prev_flow_tap_key(uint16_t keycode) {
     return false;
 }
 
-
+// Return the time in milliseconds that this key needs to have been from the previous key in order for it to be considered to be part of the FlowTap session.
 uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
                            uint16_t prev_keycode) {
     // Tap/holds where the tap never needs to be part of a flow tap session.
@@ -334,7 +351,7 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
     // Else, if you hit enter multiple times and then quickly go to press the up arrow, then you'll actually 
     // get the tap action on the key that takes you into the arrows layer. Whereas instead, if we remove 
     // enter from the flow tap, then you'll instantly access the arrows layer after hitting a load of enter keys.
-    if (!is_prev_flow_tap_key(prev_keycode)) {
+    if (!is_flow_tap_keycode(prev_keycode)) {
         return 0;
     }
 
@@ -367,39 +384,3 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
 
     return FLOW_TAP_TERM;
 }
-
-uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
-    switch (get_tap_keycode(keycode)) {
-        // Allows you to access the hold states of these keys, even if the previous key press was the same key. 
-        // Without the below config, if you typed R and then try to shift another letter by then holding R, it 
-        // would instead just type R again, because it would be registered as a tap then hold on the R key, 
-        // which the "quick tap" behaviour will just start repeating R instead of taking you into the hold state for R.
-        case KC_SPC:
-        case KC_T:
-        case KC_E:
-        case KC_R:
-            return 0;
-        default:
-            return QUICK_TAP_TERM;
-    }
-}
-
-uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        // case LSFT_OSM:
-        //     return TAPPING_TERM + 50;
-        // case LAY1_BSPC:
-        //     return TAPPING_TERM - 50;
-        default:
-            return TAPPING_TERM; 
-    }
-}
-
-// Collect all overrides here
-const key_override_t *key_overrides[] = {
-
-    // Shift + BSPC  ->  DEL
-    &(ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL)),
-    
-    NULL
-};

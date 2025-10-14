@@ -15,7 +15,7 @@
 
 // Quick Tap
 // https://docs.qmk.fm/tap_hold#quick-tap-term
-#define QUICK_TAP_TERM_PER_KEY
+#define QUICK_TAP_TERM 0 // Disable so we can access the symbols layer quickly after pressing the spacebar without it registering as a quick tap for doing repeated spaces.
 
 // Caps Word
 // https://docs.qmk.fm/features/caps_word
