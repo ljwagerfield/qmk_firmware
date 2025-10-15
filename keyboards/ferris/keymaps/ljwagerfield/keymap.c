@@ -6,7 +6,6 @@ enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN };
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
     LOCK_ARR,
-    LOCK_SCROLL,
     UNLOCK_SCROLL,
     UNLOCK_SCROLL_ESC,
     GOTO_LINE
@@ -38,6 +37,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS     , KC_0     ,
         LSFT_T(KC_SPC)  , KC_TRNS
     ),
+    [_ARR] = LAYOUT_split_3x5_2(
+        // LCMD(KC_B) Added for code navigation because Command + B is used a lot with arrow keys when navigating around code.
+        KC_NO   , KC_NO      , LCMD(KC_B)      , KC_NO      , KC_NO   ,
+        KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
+        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
+        LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
+        KC_NO   , KC_NO   , GOTO_LINE     , LCMD(KC_V)  , KC_NO  ,
+        KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
+        KC_TRNS  , KC_LSFT ,
+        KC_SPC     , KC_TRNS
+    ),
     [_SCROLL] = LAYOUT_split_3x5_2(
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
         KC_NO   ,    KC_NO, KC_K  ,    KC_NO      ,KC_U,
@@ -47,17 +57,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO     , UNLOCK_SCROLL   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
         KC_TRNS     , KC_LSFT     ,
         UNLOCK_SCROLL  , UNLOCK_SCROLL_ESC
-    ),
-    [_ARR] = LAYOUT_split_3x5_2(
-        // LCMD(KC_B) Added for code navigation because Command + B is used a lot with arrow keys when navigating around code.
-        KC_NO   , KC_NO      , LCMD(KC_B)      , KC_NO      , KC_NO   ,
-        KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
-        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
-        LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
-        KC_NO   , KC_NO   , GOTO_LINE     , LCMD(KC_V)  , KC_NO  ,
-        KC_NO  , LOCK_SCROLL      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
-        KC_TRNS  , KC_LSFT ,
-        KC_SPC     , KC_TRNS
     ),
     [_GOTO_LINE] = LAYOUT_split_3x5_2(
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
@@ -293,14 +292,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 goto_lock(return_to_layer);
                 return false;
             }
-            break; 
-        case LOCK_SCROLL:
-            if (is_layer_locked(_ARR)) {
-                return tap(KC_ENT);
-            } else {
+            if (!is_layer_locked(_ARR) && get_highest_layer(layer_state) == _ARR) {
                 goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
                 return false;
             }
+            break; 
         case RCMD_T(LOCK_NUM):
              if (record->tap.count > 0) { // Ensure this is a tap
                 lock_layer(_NUM);
