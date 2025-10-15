@@ -14,6 +14,7 @@ enum custom_keycodes {
 
 // Records the modifiers that were active for the last key press.
 static uint8_t last_press_mods = 0;
+static uint8_t return_to_layer = 0;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Alpha (Hands Down Prometheus)
@@ -47,6 +48,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TRNS     , KC_LSFT     ,
         UNLOCK_SCROLL  , UNLOCK_SCROLL_ESC
     ),
+    [_ARR] = LAYOUT_split_3x5_2(
+        // LCMD(KC_B) Added for code navigation because Command + B is used a lot with arrow keys when navigating around code.
+        KC_NO   , KC_NO      , LCMD(KC_B)      , KC_NO      , KC_NO   ,
+        KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
+        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
+        LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
+        KC_NO   , KC_NO   , GOTO_LINE     , LCMD(KC_V)  , KC_NO  ,
+        KC_NO  , LOCK_SCROLL      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
+        KC_TRNS  , KC_LSFT ,
+        KC_SPC     , KC_TRNS
+    ),
     [_GOTO_LINE] = LAYOUT_split_3x5_2(
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
         KC_NO   ,    KC_NO, KC_NO  ,    KC_NO     ,KC_NO,
@@ -56,16 +68,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_NO   ,
         KC_TRNS     , KC_0     ,
         KC_ESC  , KC_ESC
-    ),
-    [_ARR] = LAYOUT_split_3x5_2(
-        KC_NO   , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
-        KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
-        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
-        LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
-        KC_NO   , KC_NO   , KC_NO     , LCMD(KC_V)  , KC_NO  ,
-        KC_NO  , LOCK_SCROLL      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
-        KC_TRNS  , KC_LSFT ,
-        KC_SPC     , KC_TRNS
     ),
     [_SYM] = LAYOUT_split_3x5_2(
         KC_EXLM         , KC_GRAVE, KC_DOLLAR      , KC_LCBR      , KC_RCBR   ,
@@ -115,9 +117,17 @@ static inline bool unlock_all_layer_locks(void) {
     }
     return had_lock;
 }
+static inline uint8_t get_highest_locked_layer(void) {
+    for (uint8_t l = 32 - 1; l >= 0; l++) {
+        if (is_layer_locked(l)) {
+            return l;
+        }
+    }
+    return _ALPHA;
+}
 
 // Locks a particular layer and then sends a key press.
-static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycode) {
+static inline void goto_lock(uint8_t target_layer) {
     // If you prefer only one lock at a time, clear others first:
     unlock_all_layer_locks();
 
@@ -126,6 +136,10 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
 
     // Lock that layer so Esc (below) can unlock it
     layer_lock_on(target_layer);
+}
+
+static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycode) {
+    goto_lock(target_layer);
 
     // Send the host key
     tap_code16(send_keycode);
@@ -257,7 +271,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             break;
         case GOTO_LINE:
-            tap(KC_TOGGLE_SCROLL);
+            if (is_layer_locked(_SCROLL)) {
+                tap(KC_TOGGLE_SCROLL);
+                return_to_layer = _ALPHA;
+            }
+            else {
+                return_to_layer = get_highest_locked_layer();
+            }
             goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));
             return false;
         case UNLOCK_SCROLL:
@@ -269,9 +289,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return tap(KC_ESC);
         case KC_ENT:
             if (is_layer_locked(_GOTO_LINE)) {
-                layer_lock_off(_GOTO_LINE);
+                tap(KC_ENT);
+                goto_lock(return_to_layer);
+                return false;
             }
-            break; // Let KC_ENT pass through
+            break; 
         case LOCK_SCROLL:
             if (is_layer_locked(_ARR)) {
                 return tap(KC_ENT);
