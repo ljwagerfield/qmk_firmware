@@ -1,11 +1,12 @@
 // clang-format off
 #include QMK_KEYBOARD_H
 
-enum layers { _ALPHA, _NUM, _SCROLL, _GOTO_LINE, _ARR, _SYM, _FN };
+enum layers { _ALPHA, _NUM, _ARR, _SCROLL, _GOTO_LINE, _SYM, _FN };
 
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
     LOCK_ARR,
+    LOCK_SCROLL,
     UNLOCK_SCROLL,
     UNLOCK_SCROLL_ESC,
     GOTO_LINE
@@ -13,7 +14,6 @@ enum custom_keycodes {
 
 // Records the modifiers that were active for the last key press.
 static uint8_t last_press_mods = 0;
-static uint8_t return_to_layer = 0;
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Alpha (Hands Down Prometheus)
@@ -30,7 +30,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_NUM] = LAYOUT_split_3x5_2(
         LSFT(KC_3)     , KC_1      , KC_2      , KC_3      , KC_NO     ,
         KC_LPRN   ,    KC_CIRC, KC_SLSH  ,    KC_PERC     ,KC_RPRN,
-        KC_DOT  , KC_4   , LT(_ARR, KC_5)  , KC_6    , KC_NO   ,
+        LOPT_T(KC_DOT)  , LCTL_T(KC_4)   , LT(_ARR, KC_5)  , LCMD_T(KC_6)    , KC_NO   ,
         KC_TILDE     , RCMD_T(LOCK_NUM)      ,KC_KP_ASTERISK       , LCTL_T(KC_PLUS)      , LOPT_T(KC_MINUS)      ,
         KC_DOLLAR     , KC_7      , KC_8      , KC_9      , KC_NO   ,
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
@@ -40,13 +40,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_ARR] = LAYOUT_split_3x5_2(
         // LCMD(KC_B) Added for code navigation because Command + B is used a lot with arrow keys when navigating around code.
         KC_NO   , KC_NO      , LCMD(KC_B)      , KC_NO      , KC_NO   ,
-        KC_LPRN   , KC_LEFT      , KC_UP      , KC_RIGHT      , KC_RPRN   ,
+        KC_NO   , KC_LEFT      , KC_UP      , KC_RIGHT      , LOCK_SCROLL   ,
         LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
         KC_NO   , KC_NO   , GOTO_LINE     , LCMD(KC_V)  , KC_NO  ,
         KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
         KC_TRNS  , KC_LSFT ,
-        KC_SPC     , KC_TRNS
+        KC_TRNS     , KC_TRNS
     ),
     [_SCROLL] = LAYOUT_split_3x5_2(
         KC_NO     , KC_1      , KC_2      , KC_3      , KC_NO     ,
@@ -108,37 +108,21 @@ static bool tap(uint16_t keycode) {
 static inline bool unlock_all_layer_locks(void) {
     bool had_lock = false;
     // Adjust upper bound if you use many layers; 32 is plenty for most keymaps
-    for (uint8_t l = 0; l < 32; l++) {
+    for (uint8_t l = 1; l < 32; l++) {
         if (is_layer_locked(l)) {
             layer_lock_off(l);
+            had_lock = true;
+        }
+        if (layer_state_is(l)) {
+            layer_off(l);
             had_lock = true;
         }
     }
     return had_lock;
 }
-static inline uint8_t get_highest_locked_layer(void) {
-    for (uint8_t l = 32 - 1; l >= 0; l++) {
-        if (is_layer_locked(l)) {
-            return l;
-        }
-    }
-    return _ALPHA;
-}
-
-// Locks a particular layer and then sends a key press.
-static inline void goto_lock(uint8_t target_layer) {
-    // If you prefer only one lock at a time, clear others first:
-    unlock_all_layer_locks();
-
-    // Move to target layer immediately
-    layer_move(target_layer);
-
-    // Lock that layer so Esc (below) can unlock it
-    layer_lock_on(target_layer);
-}
 
 static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycode) {
-    goto_lock(target_layer);
+    layer_on(target_layer);
 
     // Send the host key
     tap_code16(send_keycode);
@@ -270,30 +254,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             break;
         case GOTO_LINE:
-            if (is_layer_locked(_SCROLL)) {
+            if (layer_state_is(_SCROLL)) {
                 tap(KC_TOGGLE_SCROLL);
-                return_to_layer = _ALPHA;
-            }
-            else {
-                return_to_layer = get_highest_locked_layer();
+                layer_off(_SCROLL);
             }
             goto_lock_and_send(_GOTO_LINE, LCMD(KC_G));
             return false;
+        case LOCK_SCROLL:
+            goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
+            return false;
         case UNLOCK_SCROLL:
-            layer_lock_off(_SCROLL);
+            layer_off(_SCROLL);
             return tap(KC_TOGGLE_SCROLL);
         case UNLOCK_SCROLL_ESC:
-            layer_lock_off(_SCROLL);
+            layer_off(_SCROLL);
             tap(KC_TOGGLE_SCROLL);
+            wait_ms(300); // Allow some time for Homerow to deactivate the scroll overlay before sending the escape command so that it is captured by the underlying application.
             return tap(KC_ESC);
         case KC_ENT:
-            if (is_layer_locked(_GOTO_LINE)) {
+            if (layer_state_is(_GOTO_LINE)) {
                 tap(KC_ENT);
-                goto_lock(return_to_layer);
-                return false;
-            }
-            if (!is_layer_locked(_ARR) && get_highest_layer(layer_state) == _ARR) {
-                goto_lock_and_send(_SCROLL, KC_TOGGLE_SCROLL);
+                layer_off(_GOTO_LINE);
                 return false;
             }
             break; 
