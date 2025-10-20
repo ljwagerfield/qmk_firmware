@@ -95,6 +95,9 @@ const key_override_t *key_overrides[] = {
 
     // Shift + BSPC  ->  DEL
     &(ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL)),
+
+    // CMD + + -> CMD + =
+    &(ko_make_basic(MOD_MASK_GUI, KC_PLUS, RCMD(KC_EQL))),
     
     NULL
 };
