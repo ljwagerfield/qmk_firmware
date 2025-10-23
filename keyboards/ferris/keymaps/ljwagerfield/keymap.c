@@ -90,11 +90,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     )
 };
 
+// Shift + BSPC  ->  DEL (Remove Shift)
+const key_override_t del_override = {
+    .trigger_mods       = MOD_MASK_SHIFT,   // must be held
+    .layers             = ~0,               // all layers
+    .suppressed_mods    = MOD_MASK_SHIFT,   // don't send Shift to host
+    .options            = 0,                // defaults fine
+    .negative_mod_mask  = 0,                // no extra forbidden mods
+    .custom_action      = NULL,
+    .context            = NULL,
+    .trigger            = KC_BSPC,          // when Backspace is the key
+    .replacement        = KC_DEL,           // send Delete
+    .enabled            = NULL
+};
+
 // Basic key overrides.
 const key_override_t *key_overrides[] = {
 
-    // Shift + BSPC  ->  DEL
-    &(ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL)),
+    &del_override,
 
     // CMD + + -> CMD + =
     &(ko_make_basic(MOD_MASK_GUI, KC_PLUS, RCMD(KC_EQL))),
