@@ -4,8 +4,7 @@
 enum layers { _ALPHA, _NUM, _ARR, _SCROLL, _GOTO_LINE, _SYM, _FN };
 
 enum custom_keycodes {
-    LOCK_NUM = SAFE_RANGE,
-    NUM_NO, // If we use KC_NO, then using the combo to go from the numbers layer to the arrows layer results in some arrow key presses when entering the arrows layer for some reason. So we use a custom key code instead.
+    NUM_NO = SAFE_RANGE, // If we use KC_NO, then using the combo to go from the numbers layer to the arrows layer results in some arrow key presses when entering the arrows layer for some reason. So we use a custom key code instead.
     LOCK_SCROLL,
     UNLOCK_SCROLL,
     UNLOCK_SCROLL_ESC,
@@ -57,9 +56,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // LCMD(KC_B) Added for code navigation because Command + B is used a lot with arrow keys when navigating around code.
         KC_NO   , KC_NO      , LCMD(KC_B)      , KC_NO      , KC_NO   ,
         KC_NO   , KC_LEFT      , KC_UP      , KC_RIGHT      , LOCK_SCROLL   ,
-        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, KC_LCMD, KC_NO,
+        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LCMD(KC_V)), KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
-        KC_NO   , KC_NO   , GOTO_LINE     , LCMD(KC_V)  , KC_NO  ,
+        KC_NO   , KC_NO   , GOTO_LINE     , KC_NO  , KC_NO  ,
         KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
         KC_TRNS  , KC_LSFT ,
         KC_TRNS     , KC_TRNS
@@ -208,6 +207,7 @@ static inline uint16_t get_tap_keycode_from_mod_tap(uint16_t keycode) {
         case LOPT_T(LCTL(LSFT(KC_BSPC))): return LCTL(LSFT(KC_BSPC));
         case LOPT_T(LCMD(KC_X)): return LCMD(KC_X);
         case LCTL_T(LCMD(KC_C)): return LCMD(KC_C);
+        case LCMD_T(LCMD(KC_V)): return LCMD(KC_V);
     }
 
     return 0;
@@ -318,12 +318,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 return false;
             }
             break; 
-        case RCMD_T(LOCK_NUM):
-             if (record->tap.count > 0) { // Ensure this is a tap
-                lock_layer(_NUM);
-                return false;
-            }
-            return true; // Pass through hold
     }
 
     // We only want this guard for dual-function key handlers (which follow below)...
