@@ -15,6 +15,9 @@ enum custom_keycodes {
 // Records the modifiers that were active for the last key press.
 static uint8_t last_press_mods = 0;
 
+// Tracks if the current word that we're typing contains a shifted character.
+static bool word_contains_shift = false;
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Alpha (Hands Down Prometheus)
     [_ALPHA] = LAYOUT_split_3x5_2(
@@ -211,6 +214,19 @@ static inline uint8_t encoded_mods_if_pure_wrapper(uint16_t keycode, uint16_t ke
     return QK_MODS_GET_MODS(keycode);
 }
 
+// Return if this key code should be included in a FlowTap session.
+bool is_flow_tap_keycode(uint16_t keycode) {
+    switch (get_tap_keycode(keycode)) {
+        // TODO: Add all symbols here.
+        case KC_SPC:
+        case KC_A ... KC_Z:
+        case KC_1 ... KC_0:
+            return true;
+    }
+
+    return false;
+}
+
 // Called on every key down and up.
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // --- Re-write Alt+Alpha to Hyper+Alpha. ---
@@ -246,6 +262,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     // Record all the modifiers that are active as this information is used when determining whether the flow tap should be applied to the next key.
     last_press_mods = encoded_mods_if_pure_wrapper(keycode, keycode_from_mod_tap) | get_mods() | get_weak_mods() | get_oneshot_mods();
+
+    // End of word detected, so reset flag.
+    if (base_keycode == KC_ENT || base_keycode == KC_SPC || !is_flow_tap_keycode(keycode)){
+        word_contains_shift = false;
+    }
+    else if (get_mods() == MOD_BIT(KC_LSFT)) {
+        word_contains_shift = true;
+    }
     
     // On key down, perform the following behavior.
     switch (keycode) {
@@ -320,18 +344,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-// Return if this key code should be included in a FlowTap session.
-bool is_flow_tap_keycode(uint16_t keycode) {
-    switch (get_tap_keycode(keycode)) {
-        // TODO: Add all symbols here.
-        case KC_SPC:
-        case KC_A ... KC_Z:
-            return true;
-    }
-
-    return false;
-}
-
 // Return the time in milliseconds that this key needs to have been from the previous key in order for it to be considered to be part of the FlowTap session.
 uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
                            uint16_t prev_keycode) {
@@ -374,7 +386,7 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
             // tap timeout to allow the symbols layer to be more responsive.
             return 50; 
         case KC_R:
-            if (get_tap_keycode(prev_keycode) == KC_SPC) {
+            if (get_tap_keycode(prev_keycode) == KC_SPC || word_contains_shift) {
                 return 0; // Optimisation: Allows symbols and shifted chars immediately after a space 
             }
 
@@ -385,4 +397,13 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t* record,
     }
 
     return FLOW_TAP_TERM;
+}
+
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case LSFT_T(KC_R):
+            return 110;
+        default:
+            return TAPPING_TERM;
+    }
 }
