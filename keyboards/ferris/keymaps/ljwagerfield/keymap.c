@@ -5,7 +5,7 @@ enum layers { _ALPHA, _NUM, _ARR, _SCROLL, _GOTO_LINE, _SYM, _FN };
 
 enum custom_keycodes {
     LOCK_NUM = SAFE_RANGE,
-    LOCK_ARR,
+    NUM_NO, // If we use KC_NO, then using the combo to go from the numbers layer to the arrows layer results in some arrow key presses when entering the arrows layer for some reason. So we use a custom key code instead.
     LOCK_SCROLL,
     UNLOCK_SCROLL,
     UNLOCK_SCROLL_ESC,
@@ -17,6 +17,19 @@ static uint8_t last_press_mods = 0;
 
 // Tracks if the current word that we're typing contains a shifted character.
 static bool word_contains_shift = false;
+
+const uint16_t PROGMEM combo_alpha_to_arrow[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I), COMBO_END};
+const uint16_t PROGMEM combo_arrow_to_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT), COMBO_END};
+const uint16_t PROGMEM combo_num_to_arrow[] = {KC_LCMD      ,NUM_NO       , KC_LCTL, COMBO_END};
+const uint16_t PROGMEM combo_any_to_alpha[] = {KC_ENT, KC_BSPC, COMBO_END};
+const uint16_t PROGMEM combo_any_to_num[] = {KC_ENT, KC_BSPC, KC_TAB, COMBO_END};
+combo_t key_combos[] = {
+    COMBO(combo_alpha_to_arrow, TO(_ARR)),
+    COMBO(combo_arrow_to_arrow, TO(_ARR)),
+    COMBO(combo_num_to_arrow, TO(_ARR)),
+    COMBO(combo_any_to_alpha, TO(_ALPHA)),
+    COMBO(combo_any_to_num, TO(_NUM)),
+};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Alpha (Hands Down Prometheus)
@@ -31,12 +44,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         LT(_SYM, KC_SPC)  , KC_ESC
     ),
     [_NUM] = LAYOUT_split_3x5_2(
-        LSFT(KC_3)     , KC_1      , KC_2      , KC_3      , KC_NO     ,
-        KC_LPRN   ,    KC_CIRC, KC_SLSH  ,    KC_PERC     ,KC_RPRN,
-        LOPT_T(KC_DOT)  , LCTL_T(KC_4)   , LT(_ARR, KC_5)  , LCMD_T(KC_6)    , KC_NO   ,
-        KC_TILDE     , RCMD_T(LOCK_NUM)      ,KC_KP_ASTERISK       , LCTL_T(KC_PLUS)      , LOPT_T(KC_MINUS)      ,
-        KC_DOLLAR     , KC_7      , KC_8      , KC_9      , KC_NO   ,
-        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_EQL   ,
+        KC_NO   , KC_1   , KC_2   , KC_3    , KC_NO     ,
+        KC_NO   , KC_NO  , KC_NO  , KC_NO   , KC_NO,
+        KC_DOT  , KC_4   , KC_5   , KC_6    , KC_NO   ,
+        KC_NO     , KC_LCMD      ,NUM_NO       , KC_LCTL      , KC_LOPT      ,
+        KC_NO     , KC_7      , KC_8      , KC_9      , KC_NO   ,
+        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_NO   ,
         KC_TRNS     , KC_0     ,
         LSFT_T(KC_SPC)  , KC_TRNS
     ),
@@ -44,7 +57,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // LCMD(KC_B) Added for code navigation because Command + B is used a lot with arrow keys when navigating around code.
         KC_NO   , KC_NO      , LCMD(KC_B)      , KC_NO      , KC_NO   ,
         KC_NO   , KC_LEFT      , KC_UP      , KC_RIGHT      , LOCK_SCROLL   ,
-        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LOCK_ARR), KC_NO,
+        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, KC_LCMD, KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
         KC_NO   , KC_NO   , GOTO_LINE     , LCMD(KC_V)  , KC_NO  ,
         KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
@@ -296,7 +309,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case UNLOCK_SCROLL_ESC:
             layer_off(_SCROLL);
             tap(KC_TOGGLE_SCROLL);
-            wait_ms(300); // Allow some time for Homerow to deactivate the scroll overlay before sending the escape command so that it is captured by the underlying application.
+            wait_ms(500); // Allow some time for Homerow to deactivate the scroll overlay before sending the escape command so that it is captured by the underlying application.
             return tap(KC_ESC);
         case KC_ENT:
             if (layer_state_is(_GOTO_LINE)) {
@@ -311,18 +324,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 return false;
             }
             return true; // Pass through hold
-        case LCMD_T(LOCK_ARR):
-             if (record->tap.count > 0) { // Ensure this is a tap
-                lock_layer(_ARR);
-                return false;
-            }
-            return true; // Pass through hold
-    }
-
-    if (get_tap_keycode(keycode) == KC_ESC) {
-        if (unlock_all_layer_locks()) {
-            return false; // Swallow ESC if a layer was unlocked.
-        }
     }
 
     // We only want this guard for dual-function key handlers (which follow below)...
