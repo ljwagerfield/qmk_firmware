@@ -58,7 +58,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO   , KC_LEFT      , KC_UP      , KC_RIGHT      , LOCK_SCROLL   ,
         LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LCMD(KC_V)), KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
-        KC_NO   , KC_NO   , GOTO_LINE     , KC_NO  , KC_NO  ,
+        KC_NO   , KC_NO   , GOTO_LINE     , KC_APP  , KC_NO  ,
         KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
         KC_TRNS  , KC_LSFT ,
         KC_TRNS     , KC_TRNS
