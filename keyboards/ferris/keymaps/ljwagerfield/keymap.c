@@ -58,14 +58,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         LSFT_T(KC_SPC)  , KC_TRNS
     ),
     [_ARR] = LAYOUT_split_3x5_2(
-        // LCMD(KC_B) Added for code navigation because Command + B is used a lot with arrow keys when navigating around code.
-        KC_NO   , KC_NO      , LCMD(KC_B)      , KC_NO      , KC_NO   ,
-        KC_NO   , KC_LEFT      , KC_UP      , KC_RIGHT      , LOCK_SCROLL   ,
-        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), ARR_NO, LCMD_T(LCMD(KC_V)), KC_NO,
+        // Popular shortcuts, based on alpha layer, but optimised arround the shortcut's popularity.
+        LCMD(KC_F)   , LCMD(KC_P)      , LCMD(KC_D)      , LCMD(KC_S)      , LCMD(KC_U)   ,
+        LCMD(KC_R)   , KC_LEFT      , KC_UP      , KC_RIGHT      , LOCK_SCROLL   ,
+        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), LCMD(KC_H), LCMD_T(LCMD(KC_V)), LCMD(KC_O),
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
-        KC_NO   , KC_NO   , GOTO_LINE     , KC_APP  , KC_NO  ,
-        KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
-        KC_TRNS  , KC_LSFT ,
+        LCMD(KC_B)   , LCMD(KC_W)   , GOTO_LINE     , LCMD(KC_I)  , LCTL(KC_I)  ,
+        LCMD(KC_Q)  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
+        LT(_FN, KC_A)  , RSFT_T(LCTL(KC_R)) ,
         KC_TRNS     , KC_TRNS
     ),
     [_SCROLL] = LAYOUT_split_3x5_2(
@@ -213,6 +213,8 @@ static inline uint16_t get_tap_keycode_from_mod_tap(uint16_t keycode) {
         case LOPT_T(LCMD(KC_X)): return LCMD(KC_X);
         case LCTL_T(LCMD(KC_C)): return LCMD(KC_C);
         case LCMD_T(LCMD(KC_V)): return LCMD(KC_V);
+        case LT(_FN, KC_A): return LCMD(KC_A);
+        case RSFT_T(LCTL(KC_R)): return LCTL(KC_R);
     }
 
     return 0;
