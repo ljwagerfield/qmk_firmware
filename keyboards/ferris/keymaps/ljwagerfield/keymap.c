@@ -163,16 +163,15 @@ static inline void goto_lock_and_send(uint8_t target_layer, uint16_t send_keycod
 }
 
 // Rewrites Alt+Alpha to Hyper+Alpha.
-static bool handle_alt_to_hyper(uint16_t keycode) {
+static bool handle_alt_to_hyper(uint16_t keycode, uint16_t all_active_mods) {
     // 1. Check if the key is an alpha character.
     if (!(keycode >= KC_A && keycode <= KC_Z)) {
         return true; // Not for us, process normally.
     }
 
-    uint8_t mods = get_mods();
-    bool alt_is_held = (mods & MOD_MASK_ALT) != 0;
-    bool shift_is_held = (mods & MOD_MASK_SHIFT) != 0;
-    bool other_mods_are_held = (mods & (MOD_MASK_CTRL | MOD_MASK_GUI)) != 0;
+    bool alt_is_held = (all_active_mods & MOD_MASK_ALT) != 0;
+    bool shift_is_held = (all_active_mods & MOD_MASK_SHIFT) != 0;
+    bool other_mods_are_held = (all_active_mods & (MOD_MASK_CTRL | MOD_MASK_GUI)) != 0;
 
     // CASE 1: Alt + Shift are held (but not Ctrl or GUI)
     if (alt_is_held && shift_is_held && !other_mods_are_held) {
@@ -214,7 +213,6 @@ static inline void lock_layer(uint8_t target_layer) {
 // Returns the tap key code for a dual function key. (These are clipped due to the 16-bit size of the key codes in QMK, so we need to do the mapping here.)
 static inline uint16_t get_tap_keycode_from_mod_tap(uint16_t keycode) {
     switch (keycode) {
-        case LCMD_T(QK_LAYER_LOCK): return QK_LAYER_LOCK;
         case LOPT_T(KC_LPRN): return KC_LPRN;
         case LCTL_T(KC_RPRN): return KC_RPRN;
         case LCMD_T(KC_RABK): return KC_RABK;
@@ -262,12 +260,14 @@ bool is_flow_tap_keycode(uint16_t keycode) {
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // --- Re-write Alt+Alpha to Hyper+Alpha. ---
     uint16_t base_keycode = get_tap_keycode(keycode);
+    uint16_t keycode_from_mod_tap = get_tap_keycode_from_mod_tap(keycode);
+    uint16_t all_active_mods = encoded_mods_if_pure_wrapper(keycode, keycode_from_mod_tap) | get_mods() | get_weak_mods() | get_oneshot_mods();
 
     if (IS_QK_MOD_TAP(keycode) || IS_QK_LAYER_TAP(keycode)) {
         // For any Mod-Tap or Layer-Tap key...
         if (record->event.pressed && record->tap.count > 0) {
             // ...on keyup, IF it was a tap, check if we should trigger the HYPR mapping.
-            if (!handle_alt_to_hyper(base_keycode)) {
+            if (!handle_alt_to_hyper(base_keycode, all_active_mods)) {
                 last_press_mods = MOD_MASK_CSAG; // CSAG = Hyper
                 return false; // Handler consumed the event.
             }
@@ -276,7 +276,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         // For any other normal key...
         if (record->event.pressed) {
             // ...on keydown, check if we should trigger the HYPR mapping.
-            if (!handle_alt_to_hyper(base_keycode)) {
+            if (!handle_alt_to_hyper(base_keycode, all_active_mods)) {
                 return false; // Handler consumed the event.
             }
         }
@@ -289,10 +289,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    uint16_t keycode_from_mod_tap = get_tap_keycode_from_mod_tap(keycode);
-
-    // Record all the modifiers that are active as this information is used when determining whether the flow tap should be applied to the next key.
-    last_press_mods = encoded_mods_if_pure_wrapper(keycode, keycode_from_mod_tap) | get_mods() | get_weak_mods() | get_oneshot_mods();
+    last_press_mods = all_active_mods;
 
     // End of word detected, so reset flag.
     if (base_keycode == KC_ENT || base_keycode == KC_SPC || !is_flow_tap_keycode(keycode)){
