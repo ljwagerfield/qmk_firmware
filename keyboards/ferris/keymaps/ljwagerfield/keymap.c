@@ -18,21 +18,23 @@ static uint8_t last_press_mods = 0;
 // Tracks if the current word that we're typing contains a shifted character.
 static bool word_contains_shift = false;
 
-const uint16_t PROGMEM combo_alpha_to_arrow[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I), COMBO_END};
-const uint16_t PROGMEM combo_arrow_to_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT), COMBO_END};
-const uint16_t PROGMEM combo_num_to_arrow[] = {KC_LCMD      ,NUM_NO       , KC_LCTL, COMBO_END};
-const uint16_t PROGMEM combo_alpha_to_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C), COMBO_END};
-const uint16_t PROGMEM combo_arrow_to_alpha[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT), COMBO_END};
-const uint16_t PROGMEM combo_num_to_alpha[] = {KC_LCMD      ,NUM_NO       , KC_LCTL      , KC_LOPT, COMBO_END};
-const uint16_t PROGMEM combo_any_to_num[] = {KC_ENT, KC_BSPC, KC_TAB, COMBO_END};
+const uint16_t PROGMEM combo_aei_on_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I), COMBO_END};
+const uint16_t PROGMEM combo_aei_on_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT), COMBO_END};
+const uint16_t PROGMEM combo_aei_on_num[] = {KC_LCMD      ,NUM_NO       , KC_LCTL, COMBO_END};
+const uint16_t PROGMEM combo_aeic_on_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C), COMBO_END};
+const uint16_t PROGMEM combo_aeic_on_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT), COMBO_END};
+const uint16_t PROGMEM combo_aeic_on_num[] = {KC_LCMD      ,NUM_NO       , KC_LCTL      , KC_LOPT, COMBO_END};
+const uint16_t PROGMEM combo_ent_bspc_tab[] = {KC_ENT, KC_BSPC, KC_TAB, COMBO_END};
+const uint16_t PROGMEM combo_ent_bspc[] = {KC_ENT, KC_BSPC, COMBO_END};
 combo_t key_combos[] = {
-    COMBO(combo_alpha_to_arrow, TO(_ARR)),
-    COMBO(combo_arrow_to_arrow, TO(_ARR)),
-    COMBO(combo_num_to_arrow, TO(_ARR)),
-    COMBO(combo_alpha_to_alpha, TO(_ALPHA)),
-    COMBO(combo_arrow_to_alpha, TO(_ALPHA)),
-    COMBO(combo_num_to_alpha, TO(_ALPHA)),
-    COMBO(combo_any_to_num, TO(_NUM)),
+    COMBO(combo_aei_on_alpha, TO(_ARR)),
+    COMBO(combo_aei_on_arrow, TO(_ARR)),
+    COMBO(combo_aei_on_num, TO(_ARR)),
+    COMBO(combo_aeic_on_alpha, TO(_ALPHA)),
+    COMBO(combo_aeic_on_arrow, TO(_ALPHA)),
+    COMBO(combo_aeic_on_num, TO(_ALPHA)),
+    COMBO(combo_ent_bspc_tab, KC_CAPS),
+    COMBO(combo_ent_bspc, QK_CAPS_WORD_TOGGLE),
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
