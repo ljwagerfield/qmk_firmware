@@ -24,6 +24,9 @@ const uint16_t PROGMEM combo_aei_on_num[] = {KC_LCMD      ,NUM_NO       , KC_LCT
 const uint16_t PROGMEM combo_aeic_on_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C), COMBO_END};
 const uint16_t PROGMEM combo_aeic_on_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT), COMBO_END};
 const uint16_t PROGMEM combo_aeic_on_num[] = {KC_LCMD      ,NUM_NO       , KC_LCTL      , KC_LOPT, COMBO_END};
+const uint16_t PROGMEM combo_ent_bspc_tab_v_on_alpha[] = {KC_ENT, KC_BSPC, KC_TAB, KC_V, COMBO_END};
+const uint16_t PROGMEM combo_ent_bspc_tab_v_on_arrow[] = {KC_ENT, KC_BSPC, KC_TAB, LCMD(KC_Z), COMBO_END};
+const uint16_t PROGMEM combo_ent_bspc_tab_v_on_num[] = {KC_ENT, KC_BSPC, KC_TAB, NUM_NO, COMBO_END};
 const uint16_t PROGMEM combo_ent_bspc_tab[] = {KC_ENT, KC_BSPC, KC_TAB, COMBO_END};
 const uint16_t PROGMEM combo_ent_bspc[] = {KC_ENT, KC_BSPC, COMBO_END};
 combo_t key_combos[] = {
@@ -33,7 +36,10 @@ combo_t key_combos[] = {
     COMBO(combo_aeic_on_alpha, TO(_ALPHA)),
     COMBO(combo_aeic_on_arrow, TO(_ALPHA)),
     COMBO(combo_aeic_on_num, TO(_ALPHA)),
-    COMBO(combo_ent_bspc_tab, KC_CAPS),
+    COMBO(combo_ent_bspc_tab_v_on_alpha, KC_CAPS),
+    COMBO(combo_ent_bspc_tab_v_on_arrow, KC_CAPS),
+    COMBO(combo_ent_bspc_tab_v_on_num, KC_CAPS),
+    COMBO(combo_ent_bspc_tab, TO(_NUM)),
     COMBO(combo_ent_bspc, QK_CAPS_WORD_TOGGLE),
 };
 
@@ -55,7 +61,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_DOT  , KC_4   , KC_5   , KC_6    , KC_NO   ,
         KC_NO     , KC_LCMD      ,NUM_NO       , KC_LCTL      , KC_LOPT      ,
         KC_NO     , KC_7      , KC_8      , KC_9      , KC_NO   ,
-        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_NO   ,
+        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , NUM_NO   ,
         KC_TRNS     , KC_0     ,
         LSFT_T(KC_SPC)  , KC_TRNS
     ),
