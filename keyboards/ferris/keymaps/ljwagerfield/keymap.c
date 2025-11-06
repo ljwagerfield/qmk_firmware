@@ -94,8 +94,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         LOPT_T(KC_LPRN)   , LCTL_T(KC_RPRN)   , KC_DQUO     , LCMD_T(KC_COMMA)   , KC_LBRC   ,
         KC_TILDE , LCMD_T(KC_RABK) , KC_EQL , LOPT_T(KC_LABK) , LCTL_T(KC_MINUS)  ,
         KC_QUES   , KC_KP_ASTERISK   , KC_SLSH     , KC_DOT  , KC_RBRC  ,
-        KC_NO  , KC_SEMICOLON      , KC_CIRC      , KC_PERC      , KC_UNDERSCORE  ,
-        KC_BSLS  , LSFT(KC_R) ,
+        KC_NO  , KC_SEMICOLON      , KC_CIRC      , KC_PERC      , LSFT(KC_3)  ,
+        KC_BSLS  , KC_UNDERSCORE ,
         KC_NO    , KC_NO
     ),
     [_FN] = LAYOUT_split_3x5_2(
@@ -115,6 +115,9 @@ const key_override_t *key_overrides[] = {
 
     // Shift + BSPC  ->  DEL
     &(ko_make_basic(MOD_MASK_SHIFT, KC_BSPC, KC_DEL)),
+
+    // Shift + Space  ->  Shift + R
+    &(ko_make_basic(MOD_MASK_SHIFT, LT(_SYM, KC_SPC), KC_R)),
 
     // CMD + + -> CMD + =
     &(ko_make_basic(MOD_MASK_GUI, KC_PLUS, RCMD(KC_EQL))),
@@ -335,12 +338,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // If this is a dual function key, then send the tap on key down.
     if (keycode_from_mod_tap) {
         return tap(keycode_from_mod_tap);
-    }
-
-    // Shift + Space -> CAP WORD
-    if (get_mods() & MOD_MASK_SHIFT && get_tap_keycode(keycode) == KC_SPC) {
-        caps_word_toggle();
-        return false;
     }
 
     return true;
