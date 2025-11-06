@@ -5,6 +5,7 @@ enum layers { _ALPHA, _NUM, _ARR, _SCROLL, _GOTO_LINE, _SYM, _FN };
 
 enum custom_keycodes {
     NUM_NO = SAFE_RANGE, // If we use KC_NO, then using the combo to go from the numbers layer to the arrows layer results in some arrow key presses when entering the arrows layer for some reason. So we use a custom key code instead.
+    ARR_NO,
     LOCK_SCROLL,
     UNLOCK_SCROLL,
     UNLOCK_SCROLL_ESC,
@@ -20,13 +21,17 @@ static bool word_contains_shift = false;
 const uint16_t PROGMEM combo_alpha_to_arrow[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I), COMBO_END};
 const uint16_t PROGMEM combo_arrow_to_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT), COMBO_END};
 const uint16_t PROGMEM combo_num_to_arrow[] = {KC_LCMD      ,NUM_NO       , KC_LCTL, COMBO_END};
-const uint16_t PROGMEM combo_any_to_alpha[] = {KC_ENT, KC_BSPC, COMBO_END};
+const uint16_t PROGMEM combo_alpha_to_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C), COMBO_END};
+const uint16_t PROGMEM combo_arrow_to_alpha[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT), COMBO_END};
+const uint16_t PROGMEM combo_num_to_alpha[] = {KC_LCMD      ,NUM_NO       , KC_LCTL      , KC_LOPT, COMBO_END};
 const uint16_t PROGMEM combo_any_to_num[] = {KC_ENT, KC_BSPC, KC_TAB, COMBO_END};
 combo_t key_combos[] = {
     COMBO(combo_alpha_to_arrow, TO(_ARR)),
     COMBO(combo_arrow_to_arrow, TO(_ARR)),
     COMBO(combo_num_to_arrow, TO(_ARR)),
-    COMBO(combo_any_to_alpha, TO(_ALPHA)),
+    COMBO(combo_alpha_to_alpha, TO(_ALPHA)),
+    COMBO(combo_arrow_to_alpha, TO(_ALPHA)),
+    COMBO(combo_num_to_alpha, TO(_ALPHA)),
     COMBO(combo_any_to_num, TO(_NUM)),
 };
 
@@ -56,7 +61,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // LCMD(KC_B) Added for code navigation because Command + B is used a lot with arrow keys when navigating around code.
         KC_NO   , KC_NO      , LCMD(KC_B)      , KC_NO      , KC_NO   ,
         KC_NO   , KC_LEFT      , KC_UP      , KC_RIGHT      , LOCK_SCROLL   ,
-        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), KC_NO, LCMD_T(LCMD(KC_V)), KC_NO,
+        LOPT_T(LCMD(KC_X)) , LCTL_T(LCMD(KC_C)), ARR_NO, LCMD_T(LCMD(KC_V)), KC_NO,
         LCMD(KC_LEFT) , LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT)  ,
         KC_NO   , KC_NO   , GOTO_LINE     , KC_APP  , KC_NO  ,
         KC_NO  , KC_TRNS      , KC_TRNS      , KC_TRNS      , LCMD(KC_Z)  ,
