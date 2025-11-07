@@ -21,6 +21,9 @@ static bool word_contains_shift = false;
 const uint16_t PROGMEM combo_aei_on_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I), COMBO_END};
 const uint16_t PROGMEM combo_aei_on_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT), COMBO_END};
 const uint16_t PROGMEM combo_aei_on_num[] = {KC_LCMD      ,NUM_NO       , KC_LCTL, COMBO_END};
+const uint16_t PROGMEM combo_aei_spc_on_alpha[] = {LT(_SYM, KC_SPC), LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I), COMBO_END};
+const uint16_t PROGMEM combo_aei_spc_on_arrow[] = {LT(_SYM, KC_SPC), LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT), COMBO_END};
+const uint16_t PROGMEM combo_aei_spc_on_num[] = {LSFT_T(KC_SPC), KC_LCMD      ,NUM_NO       , KC_LCTL, COMBO_END};
 const uint16_t PROGMEM combo_aeic_on_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C), COMBO_END};
 const uint16_t PROGMEM combo_aeic_on_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT), COMBO_END};
 const uint16_t PROGMEM combo_aeic_on_num[] = {KC_LCMD      ,NUM_NO       , KC_LCTL      , KC_LOPT, COMBO_END};
@@ -33,13 +36,16 @@ combo_t key_combos[] = {
     COMBO(combo_aei_on_alpha, TO(_ARR)),
     COMBO(combo_aei_on_arrow, TO(_ARR)),
     COMBO(combo_aei_on_num, TO(_ARR)),
+    COMBO(combo_aei_spc_on_alpha, TO(_NUM)),
+    COMBO(combo_aei_spc_on_arrow, TO(_NUM)),
+    COMBO(combo_aei_spc_on_num, TO(_NUM)),
     COMBO(combo_aeic_on_alpha, TO(_ALPHA)),
     COMBO(combo_aeic_on_arrow, TO(_ALPHA)),
     COMBO(combo_aeic_on_num, TO(_ALPHA)),
     COMBO(combo_ent_bspc_tab_v_on_alpha, KC_CAPS),
     COMBO(combo_ent_bspc_tab_v_on_arrow, KC_CAPS),
     COMBO(combo_ent_bspc_tab_v_on_num, KC_CAPS),
-    COMBO(combo_ent_bspc_tab, TO(_NUM)),
+    COMBO(combo_ent_bspc_tab, LCMD(LOPT(LCTL(KC_SPC)))),
     COMBO(combo_ent_bspc, QK_CAPS_WORD_TOGGLE),
 };
 
