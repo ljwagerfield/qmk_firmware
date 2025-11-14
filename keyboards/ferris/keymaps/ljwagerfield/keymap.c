@@ -32,6 +32,7 @@ const uint16_t PROGMEM combo_ent_bspc_tab_v_on_arrow[] = {KC_ENT, KC_BSPC, KC_TA
 const uint16_t PROGMEM combo_ent_bspc_tab_v_on_num[] = {KC_ENT, KC_BSPC, KC_TAB, NUM_NO, COMBO_END};
 const uint16_t PROGMEM combo_ent_bspc_tab[] = {KC_ENT, KC_BSPC, KC_TAB, COMBO_END};
 const uint16_t PROGMEM combo_ent_bspc[] = {KC_ENT, KC_BSPC, COMBO_END};
+const uint16_t PROGMEM combo_bspc_tab[] = {KC_BSPC, KC_TAB, COMBO_END};
 combo_t key_combos[] = {
     COMBO(combo_aei_on_alpha, TO(_ARR)),
     COMBO(combo_aei_on_arrow, TO(_ARR)),
@@ -47,6 +48,7 @@ combo_t key_combos[] = {
     COMBO(combo_ent_bspc_tab_v_on_num, KC_CAPS),
     COMBO(combo_ent_bspc_tab, LCMD(LOPT(LCTL(KC_SPC)))),
     COMBO(combo_ent_bspc, QK_CAPS_WORD_TOGGLE),
+    COMBO(combo_bspc_tab, MS_BTN1),
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -115,12 +117,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_FN] = LAYOUT_split_3x5_2(
         KC_NO , KC_NO     , LCTL(LCMD(KC_Q))     , KC_NO     , KC_NO     ,
         KC_NO , KC_F1   , KC_F2   , KC_F3   , KC_F4   , 
-        KC_NO , KC_MPRV   , KC_MPLY   , KC_MNXT   , KC_NO   ,
+        KC_LOPT , LCTL_T(KC_MPRV)   , KC_MPLY   , LCMD_T(KC_MNXT)   , KC_NO   ,
         KC_NO , KC_F5 , KC_F6 , KC_F7  , KC_F8  , 
         KC_NO , KC_VOLD     , KC_MUTE    , KC_VOLU    , KC_NO    ,
         KC_NO , KC_F9 , KC_F10   , KC_F11   , KC_F12   , 
         KC_NO   , KC_NO   ,
-        KC_NO   , QK_BOOT
+        KC_LSFT   , QK_BOOT
     )
 };
 
@@ -230,6 +232,8 @@ static inline uint16_t get_tap_keycode_from_mod_tap(uint16_t keycode) {
         case LCMD_T(LCMD(KC_V)): return LCMD(KC_V);
         case LT(_FN, KC_A): return LCMD(KC_A);
         case RSFT_T(LCTL(KC_R)): return LCTL(KC_R);
+        case LCTL_T(KC_MPRV): return KC_MPRV;
+        case LCMD_T(KC_MNXT): return KC_MNXT;
     }
 
     return 0;
