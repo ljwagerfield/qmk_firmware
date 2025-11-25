@@ -1,7 +1,7 @@
 // clang-format off
 #include QMK_KEYBOARD_H
 
-enum layers { _ALPHA, _NUM, _ARR, _SCROLL, _GOTO_LINE, _SYM, _FN };
+enum layers { _ALPHA, _NUM, _ARR, _SCROLL, _GOTO_LINE, _MOUSE, _SYM, _FN };
 
 enum custom_keycodes {
     NUM_NO = SAFE_RANGE, // If we use KC_NO, then using the combo to go from the numbers layer to the arrows layer results in some arrow key presses when entering the arrows layer for some reason. So we use a custom key code instead.
@@ -18,6 +18,7 @@ static uint8_t last_press_mods = 0;
 // Tracks if the current word that we're typing contains a shifted character.
 static bool word_contains_shift = false;
 
+const uint16_t PROGMEM combo_uoyq_on_alpha[] = {KC_U , KC_O , KC_Y, KC_Q, COMBO_END};
 const uint16_t PROGMEM combo_aei_on_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I), COMBO_END};
 const uint16_t PROGMEM combo_aei_on_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT), COMBO_END};
 const uint16_t PROGMEM combo_aei_on_num[] = {KC_LCMD      ,NUM_NO       , KC_LCTL, COMBO_END};
@@ -27,6 +28,7 @@ const uint16_t PROGMEM combo_aei_spc_on_num[] = {LSFT_T(KC_SPC), KC_LCMD      ,N
 const uint16_t PROGMEM combo_aeic_on_alpha[] = {LCMD_T(KC_A) , LT(_NUM, KC_E) , LCTL_T(KC_I) , LOPT_T(KC_C), COMBO_END};
 const uint16_t PROGMEM combo_aeic_on_arrow[] = {LOPT(KC_LEFT) , KC_DOWN , LOPT(KC_RIGHT) , LCMD(KC_RIGHT), COMBO_END};
 const uint16_t PROGMEM combo_aeic_on_num[] = {KC_LCMD      ,NUM_NO       , KC_LCTL      , KC_LOPT, COMBO_END};
+const uint16_t PROGMEM combo_aeic_on_mouse[] = {MS_BTN1      ,LCMD_T(LCMD(KC_V))       , LCMD(KC_C)      , LCMD(KC_X), COMBO_END};
 const uint16_t PROGMEM combo_ent_bspc_tab_v_on_alpha[] = {KC_ENT, KC_BSPC, KC_TAB, KC_V, COMBO_END};
 const uint16_t PROGMEM combo_ent_bspc_tab_v_on_arrow[] = {KC_ENT, KC_BSPC, KC_TAB, LCMD(KC_Z), COMBO_END};
 const uint16_t PROGMEM combo_ent_bspc_tab_v_on_num[] = {KC_ENT, KC_BSPC, KC_TAB, NUM_NO, COMBO_END};
@@ -34,6 +36,7 @@ const uint16_t PROGMEM combo_ent_bspc_tab[] = {KC_ENT, KC_BSPC, KC_TAB, COMBO_EN
 const uint16_t PROGMEM combo_ent_bspc[] = {KC_ENT, KC_BSPC, COMBO_END};
 const uint16_t PROGMEM combo_bspc_tab[] = {KC_BSPC, KC_TAB, COMBO_END};
 combo_t key_combos[] = {
+    COMBO(combo_uoyq_on_alpha, TO(_MOUSE)),
     COMBO(combo_aei_on_alpha, TO(_ARR)),
     COMBO(combo_aei_on_arrow, TO(_ARR)),
     COMBO(combo_aei_on_num, TO(_ARR)),
@@ -43,6 +46,7 @@ combo_t key_combos[] = {
     COMBO(combo_aeic_on_alpha, TO(_ALPHA)),
     COMBO(combo_aeic_on_arrow, TO(_ALPHA)),
     COMBO(combo_aeic_on_num, TO(_ALPHA)),
+    COMBO(combo_aeic_on_mouse, TO(_ALPHA)),
     COMBO(combo_ent_bspc_tab_v_on_alpha, KC_CAPS),
     COMBO(combo_ent_bspc_tab_v_on_arrow, KC_CAPS),
     COMBO(combo_ent_bspc_tab_v_on_num, KC_CAPS),
@@ -103,6 +107,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_NO   ,
         KC_TRNS     , KC_0     ,
         KC_ESC  , KC_ESC
+    ),
+    [_MOUSE] = LAYOUT_split_3x5_2(
+        KC_NO     , KC_NO      , KC_NO      , KC_NO      , KC_NO     ,
+        KC_NO   ,    MS_BTN2, LCMD(KC_Z)  ,    KC_NO     ,KC_NO,
+        KC_NO  , KC_NO   , KC_NO  , KC_NO    , KC_NO   ,
+        KC_NO     , MS_BTN1      ,LCMD_T(LCMD(KC_V))       , LCMD(KC_C)      , LCMD(KC_X)      ,
+        KC_NO     , KC_NO      , KC_NO      , KC_NO      , KC_NO   ,
+        KC_NO     , KC_TRNS   , KC_TRNS   , KC_TRNS   , KC_NO   ,
+        KC_TRNS     , KC_NO     ,
+        KC_LSFT  , KC_ESC
     ),
     [_SYM] = LAYOUT_split_3x5_2(
         KC_EXLM         , KC_GRAVE, KC_DOLLAR      , KC_LCBR      , KC_RCBR   ,
